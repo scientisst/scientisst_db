@@ -64,4 +64,12 @@ class ScientISSTdb {
 
     return "$path1strip/$path2strip";
   }
+
+  List<CollectionReference> getCollections() {
+    return List<CollectionReference>.from(
+      _rootDir.listSync().where((file) => file is Directory).map(
+            (file) async => CollectionReference._fromDirectory(file),
+          ),
+    );
+  }
 }

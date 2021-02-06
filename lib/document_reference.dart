@@ -29,6 +29,14 @@ class DocumentReference {
     );
   }
 
+  List<CollectionReference> getCollections() {
+    return List<CollectionReference>.from(
+      _collections.listSync().where((file) => file is Directory).map(
+            (file) async => CollectionReference._fromDirectory(file),
+          ),
+    );
+  }
+
   Future<void> setData(Map<String, dynamic> data, {bool merge: false}) async {
     await _init();
     if (merge) {

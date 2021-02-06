@@ -22,8 +22,10 @@ class CollectionReference {
   Future<List<DocumentSnapshot>> getDocuments() async {
     try {
       return await Future.wait(
-        _directory.listSync().where((file) => file.path.endsWith(".json")).map(
-            (file) async =>
+        _directory
+            .listSync()
+            .where((file) => file is File && file.path.endsWith(".json"))
+            .map((file) async =>
                 await DocumentReference._fromFile(file, parent: this).get()),
       );
     } on FileSystemException catch (e) {
