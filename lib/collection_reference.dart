@@ -1,28 +1,28 @@
 part of "scientisst_db.dart";
 
 class CollectionReference {
-  Directory reference;
+  Directory _directory;
   final DocumentReference parent;
 
   CollectionReference._(String path, {this.parent}) {
     assert(!path.contains("/") && !path.contains("."));
-    reference = Directory(path);
+    _directory = Directory(path);
   }
 
   CollectionReference._fromDirectory(Directory directory, {this.parent}) {
-    reference = directory;
+    _directory = directory;
   }
 
   DocumentReference document(String path) {
     assert(!path.contains("/") && !path.contains("."));
-    return DocumentReference._(ScientISSTdb._joinPaths(reference.path, path),
+    return DocumentReference._(ScientISSTdb._joinPaths(_directory.path, path),
         parent: this);
   }
 
   Future<List<DocumentSnapshot>> getDocuments() async {
     try {
       return await Future.wait(
-        reference.listSync().where((file) => file.path.endsWith(".json")).map(
+        _directory.listSync().where((file) => file.path.endsWith(".json")).map(
             (file) async =>
                 await DocumentReference._fromFile(file, parent: this).get()),
       );
@@ -35,7 +35,7 @@ class CollectionReference {
 
   Future<DocumentReference> add(Map<String, dynamic> data) async {
     DocumentReference document = DocumentReference._(
-        ScientISSTdb._joinPaths(reference.path, ObjectId().id),
+        ScientISSTdb._joinPaths(_directory.path, ObjectId().id),
         parent: this);
     await document.setData(data);
     return document;
@@ -43,7 +43,7 @@ class CollectionReference {
 
   Future<void> _checkEmpty() async {
     try {
-      await reference.delete();
+      await _directory.delete();
     } on FileSystemException catch (e) {
       if (e.osError.errorCode != 39)
         throw e; // if error is not "Directory not empty"
@@ -51,7 +51,7 @@ class CollectionReference {
   }
 
   String get path {
-    return reference.path;
+    return _directory.path;
   }
 
   Query where(String field,
@@ -83,7 +83,7 @@ class CollectionReference {
     dynamic value = values[index];
 
     return Query._(
-      reference,
+      _directory,
       this,
       [
         {
@@ -97,7 +97,7 @@ class CollectionReference {
   }
 
   Query orderBy(String field, {bool ascending = false}) => Query._(
-        reference,
+        _directory,
         this,
         [
           {

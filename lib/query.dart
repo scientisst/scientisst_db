@@ -15,57 +15,62 @@ enum ConditionType {
 }
 
 class Query {
-  final Directory reference;
-  final CollectionReference parent;
-  final List<Map<String, dynamic>> query;
+  final Directory _directory;
+  final CollectionReference reference;
+  final List<Map<String, dynamic>> _query;
 
-  Query._(this.reference, this.parent, this.query);
+  Query._(this._directory, this.reference, this._query);
 
   Future<List<DocumentSnapshot>> getDocuments() async {
+    List<DocumentSnapshot> docs;
     try {
-      final List<DocumentSnapshot> docs = await Future.wait(
-        reference.listSync().where((file) => file.path.endsWith(".json")).map(
+      docs = await Future.wait(
+        _directory.listSync().where((file) => file.path.endsWith(".json")).map(
               (file) async =>
-                  await DocumentReference._fromFile(file, parent: parent).get(),
+                  await DocumentReference._fromFile(file, parent: reference)
+                      .get(),
             ),
       );
-      for (Map<String, dynamic> condition in query) {
-        switch (condition["type"]) {
-          case ConditionType.where:
-            final dynamic field = condition["field"];
-            final Operator operator = condition["operator"];
-            final dynamic value = condition["value"];
-            return docs.where((DocumentSnapshot doc) =>
-                _checkOperator(field, operator, value));
-          case ConditionType.orderBy:
-            int a, b;
-            if (condition["ascending"]) {
-              a = 1;
-              b = -1;
-            } else {
-              a = -1;
-              b = 1;
-            }
-            final String field = condition["field"];
-            return docs
-              ..sort((DocumentSnapshot doc1, DocumentSnapshot doc2) {
-                if (doc1.data[field] > doc2.data[field]) {
-                  return a;
-                } else {
-                  if (doc1.data[field] != doc2.data[field])
-                    return b;
-                  else
-                    return 0;
-                }
-              });
-          default:
-            return docs;
-        }
-      }
     } on FileSystemException catch (e) {
       if (e.osError.errorCode != 2)
         throw e; // if error is not "No such file or directory"
       return null;
+    }
+
+    for (Map<String, dynamic> condition in _query) {
+      switch (condition["type"]) {
+        case ConditionType.where:
+          final dynamic field = condition["field"];
+          final Operator operator = condition["operator"];
+          final dynamic value = condition["value"];
+          docs = docs.where(
+              (DocumentSnapshot doc) => _checkOperator(field, operator, value));
+          break;
+        case ConditionType.orderBy:
+          int a, b;
+          if (condition["ascending"]) {
+            a = 1;
+            b = -1;
+          } else {
+            a = -1;
+            b = 1;
+          }
+          final String field = condition["field"];
+          docs.sort((DocumentSnapshot doc1, DocumentSnapshot doc2) {
+            if (doc1.data[field] > doc2.data[field]) {
+              return a;
+            } else {
+              if (doc1.data[field] != doc2.data[field])
+                return b;
+              else
+                return 0;
+            }
+          });
+          break;
+        default:
+          break;
+      }
+      return List<DocumentSnapshot>.from(docs);
     }
   }
 
@@ -115,28 +120,34 @@ class Query {
     dynamic value = values[index];
 
     return Query._(
+      _directory,
       reference,
-      parent,
-      [
-        {
-          "type": ConditionType.where,
-          "field": field,
-          "operator": operator,
-          "value": value
-        }
-      ],
+      _query
+        ..addAll(
+          [
+            {
+              "type": ConditionType.where,
+              "field": field,
+              "operator": operator,
+              "value": value
+            },
+          ],
+        ),
     );
   }
 
   Query orderBy(String field, {bool ascending = false}) => Query._(
+        _directory,
         reference,
-        parent,
-        [
-          {
-            "type": ConditionType.orderBy,
-            "field": field,
-            "ascending": ascending,
-          }
-        ],
+        _query
+          ..addAll(
+            [
+              {
+                "type": ConditionType.orderBy,
+                "field": field,
+                "ascending": ascending,
+              },
+            ],
+          ),
       );
 }

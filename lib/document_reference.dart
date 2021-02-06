@@ -3,19 +3,19 @@ part of "scientisst_db.dart";
 class DocumentReference {
   ObjectId objectId;
   final CollectionReference parent;
-  File reference;
+  File _file;
   Directory _collections;
 
   DocumentReference._(String path, {this.parent}) {
     assert(!path.contains("/") && !path.contains("."));
     final File file = File("$path.json");
-    reference = file;
+    _file = file;
     objectId = ObjectId(path.split("/").last);
     _collections = Directory(path);
   }
 
   DocumentReference._fromFile(File file, {this.parent}) {
-    reference = file;
+    _file = file;
   }
 
   CollectionReference collection(String path) {
@@ -34,22 +34,30 @@ class DocumentReference {
     if (merge) {
       await updateData(data);
     } else {
-      await reference.writeAsString(jsonEncode(data));
+      if (data == null || data.isEmpty) {
+        await delete();
+      } else {
+        await _write(data);
+      }
     }
+  }
+
+  Future<void> _write(Map<String, dynamic> data) async {
+    await _file.writeAsString(jsonEncode(data));
   }
 
   Future<void> updateData(Map<String, dynamic> data) async {
     Map<String, dynamic> _data = await _read();
     _data.addAll(data);
-    await reference.writeAsString(jsonEncode(_data));
+    await _write(_data);
   }
 
   Future<void> _init() async {
-    await reference.create(recursive: true);
+    await _file.create(recursive: true);
   }
 
   Future<void> delete() async {
-    await reference.delete();
+    await _file.delete();
     await _collections.delete(recursive: true);
     await parent._checkEmpty();
   }
@@ -59,7 +67,7 @@ class DocumentReference {
   }
 
   Future<Map<String, dynamic>> _read() async {
-    return jsonDecode(await reference.readAsString());
+    return jsonDecode(await _file.readAsString());
   }
 
   Future<DocumentSnapshot> get() async {
