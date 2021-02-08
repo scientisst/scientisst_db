@@ -5,7 +5,6 @@ class CollectionReference {
   final DocumentReference parent;
 
   CollectionReference._(String path, {this.parent}) {
-    assert(!path.contains("/") && !path.contains("."));
     _directory = Directory(path);
   }
 
@@ -36,7 +35,7 @@ class CollectionReference {
   }
 
   Future<DocumentReference> add(Map<String, dynamic> data) async {
-    DocumentReference document = DocumentReference._(
+    final DocumentReference document = DocumentReference._(
         ScientISSTdb._joinPaths(_directory.path, ObjectId().id),
         parent: this);
     await document.setData(data);

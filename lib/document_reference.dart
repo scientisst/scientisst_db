@@ -7,7 +7,6 @@ class DocumentReference {
   Directory _collections;
 
   DocumentReference._(String path, {this.parent}) {
-    assert(!path.contains("/") && !path.contains("."));
     final File file = File("$path.json");
     _file = file;
     objectId = ObjectId(path.split("/").last);
@@ -15,7 +14,11 @@ class DocumentReference {
   }
 
   DocumentReference._fromFile(File file, {this.parent}) {
+    assert(file.path.endsWith(".json"));
     _file = file;
+    final String path = file.path.substring(0, file.path.length - 5);
+    objectId = ObjectId(path.split("/").last);
+    _collections = Directory(path);
   }
 
   CollectionReference collection(String path) {
@@ -51,7 +54,16 @@ class DocumentReference {
   }
 
   Future<void> _write(Map<String, dynamic> data) async {
-    await _file.writeAsString(jsonEncode(data));
+    await _file.writeAsString(
+      jsonEncode(data, toEncodable: _myEncode),
+    );
+  }
+
+  dynamic _myEncode(dynamic item) {
+    if (item is DateTime) {
+      return item.toIso8601String();
+    }
+    return item;
   }
 
   Future<void> updateData(Map<String, dynamic> data) async {
@@ -62,6 +74,7 @@ class DocumentReference {
 
   Future<void> _init() async {
     await _file.create(recursive: true);
+    await _collections.create();
   }
 
   Future<void> delete() async {
@@ -75,7 +88,12 @@ class DocumentReference {
   }
 
   Future<Map<String, dynamic>> _read() async {
-    return jsonDecode(await _file.readAsString());
+    try {
+      return jsonDecode(await _file.readAsString());
+    } on FormatException catch (e) {
+      print(e);
+      return null;
+    }
   }
 
   Future<DocumentSnapshot> get() async {
