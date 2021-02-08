@@ -11,14 +11,16 @@ part 'query.dart';
 
 const APP_NAME = "scientisst_journal";
 
+const MAXIMUM_COUNTER = 16777216; // 3 bytes
+
 class ScientISSTdb {
   Directory _rootDir;
   static final Map<String, ScientISSTdb> _cachedInstances = {};
-  int _counterVal = Random().nextInt(8) - 1;
+  int _counterVal = Random().nextInt(MAXIMUM_COUNTER) - 1;
 
   int get _counter {
     final int counter = _counterVal++;
-    if (_counterVal >= 8) _counterVal = 0;
+    if (_counterVal >= MAXIMUM_COUNTER) _counterVal = 0;
     return counter;
   }
 
