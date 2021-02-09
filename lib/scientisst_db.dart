@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+
 part 'document_reference.dart';
 part 'collection_reference.dart';
 part 'object_id.dart';
@@ -10,12 +13,13 @@ part 'document_snapshot.dart';
 part 'query.dart';
 
 const APP_NAME = "scientisst_journal";
-
+const DB_PATH = "scientisst_db";
 const MAXIMUM_COUNTER = 16777216; // 3 bytes
 
 class ScientISSTdb {
-  Directory _rootDir;
-  static final Map<String, ScientISSTdb> _cachedInstances = {};
+  static Future<Directory> _rootDir = getApplicationDocumentsDirectory();
+  static ScientISSTdb _cachedInstance;
+  static String _cachedPath;
   int _counterVal = Random().nextInt(MAXIMUM_COUNTER) - 1;
 
   int get _counter {
@@ -24,34 +28,34 @@ class ScientISSTdb {
     return counter;
   }
 
-  ScientISSTdb() {
-    if (Platform.isAndroid) {
-      _rootDir = Directory("/data/user/0/com.scientisst.journal/scientisst_db");
-    } else if (Platform.isIOS) {
-      // TODO
-    } else {
-      throw Exception("Platform not supported");
-    }
-  }
-
   static ScientISSTdb get instance {
-    if (_cachedInstances.containsKey(APP_NAME)) {
-      return _cachedInstances[APP_NAME];
+    if (_cachedInstance != null) {
+      return _cachedInstance;
     }
 
-    ScientISSTdb newInstance = ScientISSTdb();
-    _cachedInstances[APP_NAME] = newInstance;
+    _cachedInstance = ScientISSTdb();
 
-    return newInstance;
+    return _cachedInstance;
   }
 
-  DocumentReference document(String path) {
-    return DocumentReference._(_joinPaths(_rootDir.path, path));
+  static Future<String> get _dbDir async {
+    if (_cachedPath != null) {
+      return _cachedPath;
+    }
+
+    _cachedPath = _joinPaths((await _rootDir).path, DB_PATH);
+    return _cachedPath;
   }
 
   CollectionReference collection(String path) {
-    return CollectionReference._(_joinPaths(_rootDir.path, path));
+    return CollectionReference._(parent: null, path: path);
   }
+
+  static Future<Directory> _getDirectory([String path]) async =>
+      Directory(_joinPaths(await _dbDir, path ?? ""));
+
+  static Future<File> _getFile(String path) async =>
+      File(_joinPaths(await _dbDir, path));
 
   static String _joinPaths(String path1, String path2) {
     String path1strip = path1;
@@ -67,11 +71,27 @@ class ScientISSTdb {
     return "$path1strip/$path2strip";
   }
 
-  List<CollectionReference> getCollections() {
+  Future<List<String>> listCollections() async {
+    final Directory rootDir = (await _getDirectory());
+    try {
+      return List<String>.from(
+        rootDir.listSync().where((file) => file is Directory).map(
+              (file) => file.path.split("/").last,
+            ),
+      );
+    } on FileSystemException catch (e) {
+      if (e.osError.errorCode != 2)
+        throw e; // if error is not "No such file or directory"
+      return [];
+    }
+  }
+
+  Future<List<CollectionReference>> getCollections() async {
+    final List<String> collections = await listCollections();
     return List<CollectionReference>.from(
-      _rootDir.listSync().where((file) => file is Directory).map(
-            (file) async => CollectionReference._fromDirectory(file),
-          ),
+      collections.map(
+        (String path) => CollectionReference._(parent: null, path: path),
+      ),
     );
   }
 }

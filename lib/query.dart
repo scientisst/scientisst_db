@@ -9,72 +9,119 @@ enum Operator {
   isNull
 }
 
+const OPERATORS = [
+  Operator.isEqualTo,
+  Operator.isLessThan,
+  Operator.isLessThanOrEqualTo,
+  Operator.isGreaterThan,
+  Operator.isGreaterThanOrEqualTo,
+  Operator.isNull,
+];
+
 enum ConditionType {
   where,
   orderBy,
 }
 
 class Query {
-  final Directory _directory;
   final CollectionReference reference;
-  final List<Map<String, dynamic>> _query;
+  final List<Condition> _query;
 
-  Query._(this._directory, this.reference, this._query);
+  Query._(this.reference, this._query);
 
-  Future<List<DocumentSnapshot>> getDocuments() async {
-    List<DocumentSnapshot> docs;
+  Future<List<String>> listDocuments() async {
+    final Directory documents = await reference._documents;
     try {
-      docs = await Future.wait(
-        _directory.listSync().where((file) => file.path.endsWith(".json")).map(
-              (file) async =>
-                  await DocumentReference._fromFile(file, parent: reference)
-                      .get(),
+      return List<String>.from(
+        documents.listSync().where((file) => file is File).map(
+              (file) => file.path.split("/").last,
             ),
       );
     } on FileSystemException catch (e) {
       if (e.osError.errorCode != 2)
         throw e; // if error is not "No such file or directory"
-      return null;
+      return [];
     }
+  }
 
-    for (Map<String, dynamic> condition in _query) {
-      switch (condition["type"]) {
-        case ConditionType.where:
-          final dynamic field = condition["field"];
-          final Operator operator = condition["operator"];
-          final dynamic value = condition["value"];
-          docs = docs.where(
-              (DocumentSnapshot doc) => _checkOperator(field, operator, value));
-          break;
-        case ConditionType.orderBy:
-          int a, b;
-          if (condition["ascending"]) {
-            a = 1;
-            b = -1;
-          } else {
-            a = -1;
-            b = 1;
-          }
-          final String field = condition["field"];
-          docs.sort((DocumentSnapshot doc1, DocumentSnapshot doc2) {
-            if (doc1.data[field] > doc2.data[field]) {
-              return a;
-            } else {
-              if (doc1.data[field] != doc2.data[field])
-                return b;
-              else
-                return 0;
-            }
-          });
-          break;
-        default:
-          break;
+  Future<List<DocumentSnapshot>> getDocuments() async {
+    final List<String> documents = await listDocuments();
+    List<DocumentSnapshot> snaps = await Future.wait(
+      documents.map((String documentID) async =>
+          await DocumentReference._(parent: reference, path: documentID).get()),
+    );
+
+    for (Condition condition in _query) {
+      if (condition is Where) {
+        final Where whereCondition = condition;
+        snaps = List<DocumentSnapshot>.from(
+          snaps.where(
+            (DocumentSnapshot doc) {
+              return _checkOperator(doc.data[whereCondition.field],
+                  whereCondition.operator, whereCondition.value);
+            },
+          ),
+        );
+      } else if (condition is OrderBy) {
+        final OrderBy orderByCondition = condition;
+        snaps.sort(
+          (DocumentSnapshot doc1, DocumentSnapshot doc2) => _compare(
+            doc1.data[orderByCondition.field],
+            doc2.data[orderByCondition.field],
+            ascending: orderByCondition.ascending,
+          ),
+        );
       }
-      return List<DocumentSnapshot>.from(docs);
+    }
+    return snaps;
+  }
+
+  int _compare(dynamic value1, dynamic value2, {bool ascending: true}) {
+    int _ascending = (ascending ? 1 : -1);
+    if (value1 is num && value2 is num) {
+      if (value1 == value2) return 0;
+      if (value1 > value2)
+        return 1 * _ascending;
+      else
+        return -1 * _ascending;
+    } else if (value1 is String && value2 is String) {
+      return value1.compareTo(value2) * _ascending;
+    } else {
+      return 0;
     }
   }
 
   bool _checkOperator(dynamic field, Operator operator, dynamic value) {
+    if (field is num && value is num) {
+      return _checkOperatorNum(field, operator, value);
+    } else if (field is String && value is String) {
+      return _checkOperatorString(field, operator, value);
+    } else {
+      return false;
+    }
+  }
+
+  bool _checkOperatorString(String field, Operator operator, String value) {
+    final int comparison = field.compareTo(value);
+    switch (operator) {
+      case Operator.isNull:
+        return field == null;
+      case Operator.isGreaterThan:
+        return comparison > 0;
+      case Operator.isGreaterThanOrEqualTo:
+        return comparison > 0 || comparison == 0;
+      case Operator.isLessThan:
+        return comparison < 0;
+      case Operator.isLessThanOrEqualTo:
+        return comparison < 0 || comparison == 0;
+      case Operator.isEqualTo:
+        return comparison == 0;
+      default:
+        return false;
+    }
+  }
+
+  bool _checkOperatorNum(num field, Operator operator, num value) {
     switch (operator) {
       case Operator.isNull:
         return field == null;
@@ -86,6 +133,8 @@ class Query {
         return field < value;
       case Operator.isLessThanOrEqualTo:
         return field <= value;
+      case Operator.isEqualTo:
+        return field == value;
       default:
         return false;
     }
@@ -106,48 +155,50 @@ class Query {
       isGreaterThanOrEqualTo,
       isNull,
     ];
-    assert(values.where((dynamic operator) => operator != null).length == 1);
-
-    final int index = values.indexOf((dynamic operator) => operator != null);
-    Operator operator = [
-      Operator.isEqualTo,
-      Operator.isLessThan,
-      Operator.isLessThanOrEqualTo,
-      Operator.isGreaterThan,
-      Operator.isGreaterThanOrEqualTo,
-      Operator.isNull,
-    ][index];
-    dynamic value = values[index];
-
     return Query._(
-      _directory,
       reference,
       _query
         ..addAll(
-          [
-            {
-              "type": ConditionType.where,
-              "field": field,
-              "operator": operator,
-              "value": value
-            },
-          ],
+          [_getWhere(field: field, values: values)],
         ),
     );
   }
 
   Query orderBy(String field, {bool ascending = false}) => Query._(
-        _directory,
         reference,
         _query
           ..addAll(
-            [
-              {
-                "type": ConditionType.orderBy,
-                "field": field,
-                "ascending": ascending,
-              },
-            ],
+            [_getOrderBy(field: field, ascending: ascending)],
           ),
       );
+
+  static Where _getWhere(
+      {@required String field, @required List<dynamic> values}) {
+    assert(values.where((dynamic operator) => operator != null).length == 1);
+    final int index = values.indexWhere(
+      (dynamic operator) => operator != null,
+    );
+    Operator operator = OPERATORS[index];
+    dynamic value = values[index];
+
+    return Where(field: field, operator: operator, value: value);
+  }
+
+  static OrderBy _getOrderBy({@required String field, bool ascending}) =>
+      OrderBy(field: field, ascending: ascending);
+}
+
+class Condition {}
+
+class OrderBy extends Condition {
+  final String field;
+  final bool ascending;
+  OrderBy({@required this.field, this.ascending = false});
+}
+
+class Where extends Condition {
+  final String field;
+  final Operator operator;
+  final dynamic value;
+  Where({@required this.field, @required this.operator, @required this.value});
 }

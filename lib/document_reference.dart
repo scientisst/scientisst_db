@@ -1,42 +1,57 @@
 part of "scientisst_db.dart";
 
 class DocumentReference {
-  ObjectId objectId;
-  final CollectionReference parent;
-  File _file;
-  Directory _collections;
+  String objectId;
+  CollectionReference parent;
+  String _filePath;
+  String _metadataPath;
+  String _collectionsPath;
 
-  DocumentReference._(String path, {this.parent}) {
-    final File file = File("$path.json");
-    _file = file;
-    objectId = ObjectId(path.split("/").last);
-    _collections = Directory(path);
+  DocumentReference._({@required this.parent, @required String path}) {
+    assert(!path.contains(".") && !path.contains("/"));
+
+    objectId = path;
+
+    _filePath = ScientISSTdb._joinPaths(parent._documentsPath, path);
+    _metadataPath = ScientISSTdb._joinPaths(parent._metadataPath, path);
+    _collectionsPath = ScientISSTdb._joinPaths(parent._collectionsPath, path);
   }
 
-  DocumentReference._fromFile(File file, {this.parent}) {
-    assert(file.path.endsWith(".json"));
-    _file = file;
-    final String path = file.path.substring(0, file.path.length - 5);
-    objectId = ObjectId(path.split("/").last);
-    _collections = Directory(path);
-  }
+  Future<File> get _file async => await ScientISSTdb._getFile(_filePath);
+  Future<File> get _metadata async =>
+      await ScientISSTdb._getFile(_metadataPath);
+  Future<Directory> get _collections async =>
+      await ScientISSTdb._getDirectory(_collectionsPath);
 
   CollectionReference collection(String path) {
     assert(!path.contains("/") && !path.contains("."));
-    return CollectionReference._(
-      ScientISSTdb._joinPaths(
-        _collections.path,
-        path,
-      ),
-      parent: this,
-    );
+    return CollectionReference._(parent: this, path: path);
   }
 
-  List<CollectionReference> getCollections() {
+  Future<List<String>> listCollections() async {
+    final Directory collections = await _collections;
+    try {
+      return List<String>.from(
+        collections.listSync().where((file) => file is Directory).map(
+              (file) async => file.path.split("/").last,
+            ),
+      );
+    } on FileSystemException catch (e) {
+      if (e.osError.errorCode != 2)
+        throw e; // if error is not "No such file or directory"
+      else
+        print("No such document or collection"); //TODO improve error throwing
+      return null;
+    }
+  }
+
+  Future<List<CollectionReference>> getCollections() async {
+    final List<String> collections = await listCollections();
+    if (collections == null) return null;
     return List<CollectionReference>.from(
-      _collections.listSync().where((file) => file is Directory).map(
-            (file) async => CollectionReference._fromDirectory(file),
-          ),
+      collections.map(
+        (String path) async => CollectionReference._(parent: this, path: path),
+      ),
     );
   }
 
@@ -54,7 +69,7 @@ class DocumentReference {
   }
 
   Future<void> _write(Map<String, dynamic> data) async {
-    await _file.writeAsString(
+    await (await _file).writeAsString(
       jsonEncode(data, toEncodable: _myEncode),
     );
   }
@@ -73,23 +88,25 @@ class DocumentReference {
   }
 
   Future<void> _init() async {
-    await _file.create(recursive: true);
-    await _collections.create();
+    await (await _file).create(recursive: true);
+    await (await _metadata).create(recursive: true);
+    await (await _collections).create(recursive: true);
   }
 
   Future<void> delete() async {
-    await _file.delete();
-    await _collections.delete(recursive: true);
-    await parent._checkEmpty();
+    await (await _file).delete();
+    await (await _metadata).delete();
+    await (await _collections).delete(recursive: true);
+    await parent?._deleteEmpty();
   }
 
   String get id {
-    return objectId.id;
+    return objectId;
   }
 
   Future<Map<String, dynamic>> _read() async {
     try {
-      return jsonDecode(await _file.readAsString());
+      return jsonDecode(await (await _file).readAsString());
     } on FormatException catch (e) {
       print(e);
       return null;

@@ -1,58 +1,83 @@
 part of "scientisst_db.dart";
 
 class CollectionReference {
-  Directory _directory;
+  String _directoryPath;
+  String _documentsPath;
+  String _metadataPath;
+  String _collectionsPath;
   final DocumentReference parent;
 
-  CollectionReference._(String path, {this.parent}) {
-    _directory = Directory(path);
+  CollectionReference._({@required this.parent, @required path}) {
+    assert(!path.contains(".") && !path.contains("/"));
+    String _directoryPath;
+    if (parent != null) {
+      _directoryPath = ScientISSTdb._joinPaths(parent._collectionsPath, path);
+    } else {
+      _directoryPath = path;
+    }
+
+    _documentsPath = ScientISSTdb._joinPaths(_directoryPath, "documents");
+    _metadataPath = ScientISSTdb._joinPaths(_directoryPath, "metadata");
+    _collectionsPath = ScientISSTdb._joinPaths(_directoryPath, "collections");
   }
 
-  CollectionReference._fromDirectory(Directory directory, {this.parent}) {
-    _directory = directory;
-  }
+  Future<Directory> get _directory async =>
+      await ScientISSTdb._getDirectory(_directoryPath);
+  Future<Directory> get _documents async =>
+      await ScientISSTdb._getDirectory(_documentsPath);
 
   DocumentReference document(String path) {
     assert(!path.contains("/") && !path.contains("."));
-    return DocumentReference._(ScientISSTdb._joinPaths(_directory.path, path),
-        parent: this);
+    return DocumentReference._(parent: this, path: path);
   }
 
-  Future<List<DocumentSnapshot>> getDocuments() async {
+  Future<List<String>> listDocuments() async {
+    final Directory documents = await _documents;
     try {
-      return await Future.wait(
-        _directory
-            .listSync()
-            .where((file) => file is File && file.path.endsWith(".json"))
-            .map((file) async =>
-                await DocumentReference._fromFile(file, parent: this).get()),
+      return List<String>.from(
+        documents.listSync().where((file) => file is File).map(
+              (file) => file.path.split("/").last,
+            ),
       );
     } on FileSystemException catch (e) {
       if (e.osError.errorCode != 2)
         throw e; // if error is not "No such file or directory"
-      return null;
+      return [];
     }
   }
 
+  Future<List<DocumentSnapshot>> getDocuments() async {
+    final List<String> documents = await listDocuments();
+    return await Future.wait(
+      documents.map((String documentID) async =>
+          await DocumentReference._(parent: this, path: documentID).get()),
+    );
+  }
+
   Future<DocumentReference> add(Map<String, dynamic> data) async {
-    final DocumentReference document = DocumentReference._(
-        ScientISSTdb._joinPaths(_directory.path, ObjectId().id),
-        parent: this);
+    final DocumentReference document =
+        DocumentReference._(parent: this, path: ObjectId().id);
     await document.setData(data);
     return document;
   }
 
-  Future<void> _checkEmpty() async {
+  Future<void> delete() async {
+    await (await _directory).delete(recursive: true);
+  }
+
+  Future<void> _deleteEmpty() async {
     try {
-      await _directory.delete();
+      await (await _documents)
+          .delete(); // if this deletes, it is safe to delete directory recursively
+      await (await _directory).delete(recursive: true);
     } on FileSystemException catch (e) {
       if (e.osError.errorCode != 39)
         throw e; // if error is not "Directory not empty"
     }
   }
 
-  String get path {
-    return _directory.path;
+  Future<String> get path async {
+    return (await _directory).path;
   }
 
   Query where(String field,
@@ -70,42 +95,21 @@ class CollectionReference {
       isGreaterThanOrEqualTo,
       isNull,
     ];
-    assert(values.where((dynamic operator) => operator != null).length == 1);
-
-    final int index = values.indexOf((dynamic operator) => operator != null);
-    Operator operator = [
-      Operator.isEqualTo,
-      Operator.isLessThan,
-      Operator.isLessThanOrEqualTo,
-      Operator.isGreaterThan,
-      Operator.isGreaterThanOrEqualTo,
-      Operator.isNull,
-    ][index];
-    dynamic value = values[index];
-
     return Query._(
-      _directory,
       this,
       [
-        {
-          "type": ConditionType.where,
-          "field": field,
-          "operator": operator,
-          "value": value
-        }
+        Query._getWhere(field: field, values: values),
       ],
     );
   }
 
   Query orderBy(String field, {bool ascending = false}) => Query._(
-        _directory,
         this,
         [
-          {
-            "type": ConditionType.orderBy,
-            "field": field,
-            "ascending": ascending,
-          }
+          Query._getOrderBy(
+            field: field,
+            ascending: ascending,
+          ),
         ],
       );
 }

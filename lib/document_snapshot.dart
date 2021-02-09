@@ -6,11 +6,7 @@ class DocumentSnapshot {
 
   DocumentSnapshot(this.reference, this.data);
 
-  String get id {
-    return objectId.id;
-  }
+  String get id => reference.id;
 
-  ObjectId get objectId {
-    return reference.objectId;
-  }
+  ObjectId get objectId => ObjectId(id);
 }
