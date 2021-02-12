@@ -21,14 +21,19 @@ dependencies:
 ![Architecture scheme](https://raw.githubusercontent.com/scientisst/scientisst_db/master/doc/scientisst_db_scheme.png)
 
 The database stores data in the Applications Documents Directory, provided by [`path_provider`](https://pub.dev/packages/path_provider).
+
 The database directory is stored in a root folder called `scientisst_db`.
+
 The first layer is constituted only by `collections`, which have their corresponding directory. Each `collection` directory is constituted by three separate folders: `collections`, `documents`, and `metadata`. The `collection` children `documents` are stored in the `documents` folder, where each `document` has its separate file with a filename corresponding to its `ObjectId`. The `ObjectId` is generated according to MongoDB's [standard](https://docs.mongodb.com/manual/reference/method/ObjectId/) or can be an arbitrary `String`. The `document` data is stored in a JSON formatted text file.
+
 Each `document` has a corresponding `metadata` file which is stored in the `metadata` folder inside the `collection` directory, with a filename equal to the `ObjectId`, encoded also in the JSON format.
+
 A `document` can store `collections` (sub-collections), which are stored in a folder inside the `collections` directory under the parent `collection` directory. This folder has the same filename as the `document` `ObjectId` and it follows the same `collection` structure.
 
 ## Examples
 
 See the full example [here](https://github.com/scientisst/scientisst_db/blob/master/example/example.dart).
+
 Some basic examples:
 
 ---
@@ -98,4 +103,4 @@ If you have any suggestion or problem, let us know and we'll try to improve or f
 
 ## License
 
-GNU General Public License v3.0, see the [LICENSE.md](https://github.com/scientisst/scientisst_db/tree/master/LICENSE) file for details.
+GNU General Public License v3.0, see the [LICENSE](https://github.com/scientisst/scientisst_db/tree/master/LICENSE) file for details.
