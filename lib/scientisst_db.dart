@@ -2,18 +2,24 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:watcher/watcher.dart';
 
 part 'document_reference.dart';
 part 'collection_reference.dart';
 part 'object_id.dart';
 part 'document_snapshot.dart';
 part 'query.dart';
+part 'file_reference.dart';
+part 'directory_reference.dart';
 
-const APP_NAME = "scientisst_journal";
-const DB_PATH = "scientisst_db";
+const PACKAGE_PATH = "scientisst_db";
+const DB_PATH = "db";
+const FILES_PATH = "files";
+
 const MAXIMUM_COUNTER = 16777216; // 3 bytes
 
 class ScientISSTdb {
@@ -38,41 +44,37 @@ class ScientISSTdb {
     return _cachedInstance;
   }
 
-  static Future<String> get _dbDir async {
+  static Future<String> get _dbDirPath async {
     if (_cachedPath != null) {
       return _cachedPath;
     }
 
-    _cachedPath = _joinPaths((await _rootDir).path, DB_PATH);
+    _cachedPath = _joinPaths((await _rootDir).path, PACKAGE_PATH);
     return _cachedPath;
   }
 
-  CollectionReference collection(String path) {
-    return CollectionReference._(parent: null, path: path);
-  }
+  static DirectoryReference get files =>
+      DirectoryReference._(path: _joinPaths(FILES_PATH));
 
   static Future<Directory> _getDirectory([String path]) async =>
-      Directory(_joinPaths(await _dbDir, path ?? ""));
+      Directory(_joinPaths(await _dbDirPath, path));
 
   static Future<File> _getFile(String path) async =>
-      File(_joinPaths(await _dbDir, path));
+      File(_joinPaths(await _dbDirPath, path));
 
-  static String _joinPaths(String path1, String path2) {
-    String path1strip = path1;
-    if (path1strip.startsWith("/")) path1strip = path1strip.substring(1);
-    if (path1strip.endsWith("/"))
-      path1strip = path1strip.substring(0, path1strip.length);
+  static String _joinPaths(dynamic paths, [String path2]) {
+    if (path2 == null)
+      return (paths as List<String>).join("/");
+    else
+      return "$paths/$path2";
+  }
 
-    String path2strip = path2;
-    if (path2strip.startsWith("/")) path2strip = path2strip.substring(1);
-    if (path2strip.endsWith("/"))
-      path2strip = path2strip.substring(0, path2strip.length);
-
-    return "$path1strip/$path2strip";
+  CollectionReference collection(String path) {
+    return CollectionReference._(parent: null, path: _joinPaths(DB_PATH, path));
   }
 
   Future<List<String>> listCollections() async {
-    final Directory rootDir = (await _getDirectory());
+    final Directory rootDir = await _getDirectory(DB_PATH);
     try {
       return List<String>.from(
         rootDir.listSync().where((file) => file is Directory).map(

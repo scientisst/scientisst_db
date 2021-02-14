@@ -117,7 +117,13 @@ class DocumentReference {
     return DocumentSnapshot(this, await _read());
   }
 
-  String get path {
-    return path;
+  Stream<DocumentSnapshot> watch() async* {
+    await for (WatchEvent event in FileWatcher(await _absolutePath).events) {
+      print(event);
+      yield await get();
+    }
   }
+
+  Future<String> get _absolutePath async =>
+      ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _filePath);
 }

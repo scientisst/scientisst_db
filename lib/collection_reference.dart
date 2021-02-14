@@ -54,6 +54,14 @@ class CollectionReference {
     );
   }
 
+  Stream<List<DocumentSnapshot>> watchDocuments() async* {
+    await for (WatchEvent event
+        in DirectoryWatcher(await _absoultePath).events) {
+      print(event);
+      yield await getDocuments();
+    }
+  }
+
   Future<DocumentReference> add(Map<String, dynamic> data) async {
     final DocumentReference document =
         DocumentReference._(parent: this, path: ObjectId().id);
@@ -76,9 +84,8 @@ class CollectionReference {
     }
   }
 
-  Future<String> get path async {
-    return (await _directory).path;
-  }
+  Future<String> get _absoultePath async =>
+      ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _directoryPath);
 
   Query where(String field,
       {dynamic isEqualTo,
