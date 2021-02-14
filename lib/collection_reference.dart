@@ -9,11 +9,10 @@ class CollectionReference {
 
   CollectionReference._({@required this.parent, @required path}) {
     assert(!path.contains(".") && !path.contains("/"));
-    String _directoryPath;
     if (parent != null) {
       _directoryPath = ScientISSTdb._joinPaths(parent._collectionsPath, path);
     } else {
-      _directoryPath = path;
+      _directoryPath = ScientISSTdb._joinPaths(DB_PATH, path);
     }
 
     _documentsPath = ScientISSTdb._joinPaths(_directoryPath, "documents");
@@ -70,14 +69,14 @@ class CollectionReference {
   }
 
   Future<void> delete() async {
-    await (await _directory).delete(recursive: true);
+    (await _directory).deleteSync(recursive: true);
   }
 
   Future<void> _deleteEmpty() async {
     try {
       await (await _documents)
           .delete(); // if this deletes, it is safe to delete directory recursively
-      await (await _directory).delete(recursive: true);
+      (await _directory).deleteSync(recursive: true);
     } on FileSystemException catch (e) {
       if (e.osError.errorCode != 39)
         throw e; // if error is not "Directory not empty"

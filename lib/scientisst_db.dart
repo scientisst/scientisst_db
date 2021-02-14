@@ -63,6 +63,8 @@ class ScientISSTdb {
       File(_joinPaths(await _dbDirPath, path));
 
   static String _joinPaths(dynamic paths, [String path2]) {
+    //print(paths);
+    //print(path2);
     if (path2 == null)
       return (paths as List<String>).join("/");
     else
@@ -70,7 +72,7 @@ class ScientISSTdb {
   }
 
   CollectionReference collection(String path) {
-    return CollectionReference._(parent: null, path: _joinPaths(DB_PATH, path));
+    return CollectionReference._(parent: null, path: path);
   }
 
   Future<List<String>> listCollections() async {

@@ -29,6 +29,21 @@ class Query {
 
   Query._(this.reference, this._query);
 
+  static Where _getWhere(
+      {@required String field, @required List<dynamic> values}) {
+    assert(values.where((dynamic operator) => operator != null).length == 1);
+    final int index = values.indexWhere(
+      (dynamic operator) => operator != null,
+    );
+    Operator operator = OPERATORS[index];
+    dynamic value = values[index];
+
+    return Where(field: field, operator: operator, value: value);
+  }
+
+  static OrderBy _getOrderBy({@required String field, bool ascending}) =>
+      OrderBy(field: field, ascending: ascending);
+
   Future<List<String>> listDocuments() async {
     final Directory documents = await reference._documents;
     try {
@@ -171,21 +186,6 @@ class Query {
             [_getOrderBy(field: field, ascending: ascending)],
           ),
       );
-
-  static Where _getWhere(
-      {@required String field, @required List<dynamic> values}) {
-    assert(values.where((dynamic operator) => operator != null).length == 1);
-    final int index = values.indexWhere(
-      (dynamic operator) => operator != null,
-    );
-    Operator operator = OPERATORS[index];
-    dynamic value = values[index];
-
-    return Where(field: field, operator: operator, value: value);
-  }
-
-  static OrderBy _getOrderBy({@required String field, bool ascending}) =>
-      OrderBy(field: field, ascending: ascending);
 }
 
 class Condition {}
