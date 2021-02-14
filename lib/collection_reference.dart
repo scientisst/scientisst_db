@@ -47,6 +47,7 @@ class CollectionReference {
 
   Future<List<DocumentSnapshot>> getDocuments() async {
     final List<String> documents = await listDocuments();
+    print(documents);
     return await Future.wait(
       documents.map((String documentID) async =>
           await DocumentReference._(parent: this, path: documentID).get()),
@@ -54,10 +55,13 @@ class CollectionReference {
   }
 
   Stream<List<DocumentSnapshot>> watchDocuments() async* {
+    List<DocumentSnapshot> docs = await getDocuments();
+    yield docs;
     await for (WatchEvent event
-        in DirectoryWatcher(await _absoultePath).events) {
-      print(event);
-      yield await getDocuments();
+        in DirectoryWatcher(await _absoulteDocumentsPath).events) {
+      debugPrint(event.toString());
+      docs = await getDocuments();
+      yield (docs);
     }
   }
 
@@ -85,6 +89,9 @@ class CollectionReference {
 
   Future<String> get _absoultePath async =>
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _directoryPath);
+
+  Future<String> get _absoulteDocumentsPath async =>
+      ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _documentsPath);
 
   Query where(String field,
       {dynamic isEqualTo,

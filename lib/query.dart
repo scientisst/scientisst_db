@@ -91,6 +91,17 @@ class Query {
     return snaps;
   }
 
+  Stream<List<DocumentSnapshot>> watchDocuments() async* {
+    List<DocumentSnapshot> docs = await getDocuments();
+    yield docs;
+    await for (WatchEvent event
+        in DirectoryWatcher(await reference._absoulteDocumentsPath).events) {
+      debugPrint(event.toString());
+      docs = await getDocuments();
+      yield (docs);
+    }
+  }
+
   int _compare(dynamic value1, dynamic value2, {bool ascending: true}) {
     int _ascending = (ascending ? 1 : -1);
     if (value1 is num && value2 is num) {

@@ -88,15 +88,15 @@ class DocumentReference {
   }
 
   Future<void> _init() async {
-    await (await _file).create(recursive: true);
-    await (await _metadata).create(recursive: true);
-    await (await _collections).create(recursive: true);
+    (await _file).createSync(recursive: true);
+    (await _metadata).createSync(recursive: true);
+    (await _collections).createSync(recursive: true);
   }
 
   Future<void> delete() async {
-    await (await _file).delete();
-    await (await _metadata).delete();
-    await (await _collections).delete(recursive: true);
+    (await _file).deleteSync();
+    (await _metadata).deleteSync();
+    (await _collections).deleteSync(recursive: true);
     await parent?._deleteEmpty();
   }
 
@@ -106,7 +106,7 @@ class DocumentReference {
 
   Future<Map<String, dynamic>> _read() async {
     try {
-      return jsonDecode(await (await _file).readAsString());
+      return jsonDecode((await _file).readAsStringSync());
     } on FormatException catch (e) {
       print(e);
       return null;
@@ -118,9 +118,12 @@ class DocumentReference {
   }
 
   Stream<DocumentSnapshot> watch() async* {
+    DocumentSnapshot doc = await get();
+    yield doc;
     await for (WatchEvent event in FileWatcher(await _absolutePath).events) {
-      print(event);
-      yield await get();
+      debugPrint(event.toString());
+      doc = await get();
+      yield doc;
     }
   }
 
