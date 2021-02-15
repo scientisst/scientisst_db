@@ -13,7 +13,7 @@ Made by the [ScientISST](https://scientisst.com) team.
 dependencies:
   flutter:
     sdk: flutter
-  scientisst_db: ^0.0.1
+  scientisst_db: ^0.0.2
 ```
 
 ## Architecture
@@ -94,8 +94,6 @@ await ScientISSTdb.instance
 
 ## Future
 
-- Add parallel "database" for storing `Files`;
-- Add `Stream` of `List<DocumentSnapshot>` to `collection` so the user can watch for changes in the collection `documents`;
 - Add a `Query` to limit the `collection` to the first N elements;
 - Improve the `Exceptions` thrown.
 
