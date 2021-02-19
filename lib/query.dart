@@ -66,26 +66,28 @@ class Query {
           await DocumentReference._(parent: reference, path: documentID).get()),
     );
 
-    for (Condition condition in _query) {
-      if (condition is Where) {
-        final Where whereCondition = condition;
-        snaps = List<DocumentSnapshot>.from(
-          snaps.where(
-            (DocumentSnapshot doc) {
-              return _checkOperator(doc.data[whereCondition.field],
-                  whereCondition.operator, whereCondition.value);
-            },
-          ),
-        );
-      } else if (condition is OrderBy) {
-        final OrderBy orderByCondition = condition;
-        snaps.sort(
-          (DocumentSnapshot doc1, DocumentSnapshot doc2) => _compare(
-            doc1.data[orderByCondition.field],
-            doc2.data[orderByCondition.field],
-            ascending: orderByCondition.ascending,
-          ),
-        );
+    if (snaps.isNotEmpty) {
+      for (Condition condition in _query) {
+        if (condition is Where) {
+          final Where whereCondition = condition;
+          snaps = List<DocumentSnapshot>.from(
+            snaps.where(
+              (DocumentSnapshot doc) {
+                return _checkOperator(doc.data[whereCondition.field],
+                    whereCondition.operator, whereCondition.value);
+              },
+            ),
+          );
+        } else if (condition is OrderBy) {
+          final OrderBy orderByCondition = condition;
+          snaps.sort(
+            (DocumentSnapshot doc1, DocumentSnapshot doc2) => _compare(
+              doc1.data[orderByCondition.field],
+              doc2.data[orderByCondition.field],
+              ascending: orderByCondition.ascending,
+            ),
+          );
+        }
       }
     }
     return snaps;
@@ -95,7 +97,7 @@ class Query {
     List<DocumentSnapshot> docs = await getDocuments();
     yield docs;
     await for (WatchEvent event
-        in DirectoryWatcher(await reference._absoulteDocumentsPath).events) {
+        in DirectoryWatcher(await reference._absoluteDocumentsPath).events) {
       debugPrint(event.toString());
       docs = await getDocuments();
       yield (docs);

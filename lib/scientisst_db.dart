@@ -53,7 +53,7 @@ class ScientISSTdb {
     return _cachedPath;
   }
 
-  static DirectoryReference get files =>
+  DirectoryReference get files =>
       DirectoryReference._(path: _joinPaths(FILES_PATH));
 
   static Future<Directory> _getDirectory([String path]) async =>
@@ -63,8 +63,6 @@ class ScientISSTdb {
       File(_joinPaths(await _dbDirPath, path));
 
   static String _joinPaths(dynamic paths, [String path2]) {
-    //print(paths);
-    //print(path2);
     if (path2 == null)
       return (paths as List<String>).join("/");
     else

@@ -47,10 +47,9 @@ class CollectionReference {
 
   Future<List<DocumentSnapshot>> getDocuments() async {
     final List<String> documents = await listDocuments();
-    print(documents);
     return await Future.wait(
-      documents.map((String documentID) async =>
-          await DocumentReference._(parent: this, path: documentID).get()),
+      documents.map(
+          (String documentID) async => await this.document(documentID).get()),
     );
   }
 
@@ -58,7 +57,7 @@ class CollectionReference {
     List<DocumentSnapshot> docs = await getDocuments();
     yield docs;
     await for (WatchEvent event
-        in DirectoryWatcher(await _absoulteDocumentsPath).events) {
+        in DirectoryWatcher(await _absoluteDocumentsPath).events) {
       debugPrint(event.toString());
       docs = await getDocuments();
       yield (docs);
@@ -87,10 +86,10 @@ class CollectionReference {
     }
   }
 
-  Future<String> get _absoultePath async =>
+  Future<String> get _absolutePath async =>
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _directoryPath);
 
-  Future<String> get _absoulteDocumentsPath async =>
+  Future<String> get _absoluteDocumentsPath async =>
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _documentsPath);
 
   Query where(String field,
