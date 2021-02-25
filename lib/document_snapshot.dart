@@ -11,21 +11,23 @@ class DocumentSnapshot {
   ObjectId get objectId => ObjectId(id);
 
   void _updateFieldsType(Map<String, String> fieldsType) {
-    data = data.map(
-      (String key, dynamic value) {
-        if (value.runtimeType.toString() == fieldsType["key"]) {
-          return MapEntry(key, value);
-        } else {
-          return MapEntry(
-            key,
-            _convertToType(
-              value,
-              fieldsType["key"],
-            ),
-          );
-        }
-      },
-    );
+    if (fieldsType.isNotEmpty) {
+      data = data.map(
+        (String key, dynamic value) {
+          if (value.runtimeType.toString() == fieldsType[key]) {
+            return MapEntry(key, value);
+          } else {
+            return MapEntry(
+              key,
+              _convertToType(
+                value,
+                fieldsType[key],
+              ),
+            );
+          }
+        },
+      );
+    }
   }
 
   dynamic _convertToType(dynamic value, String type) {
@@ -33,7 +35,8 @@ class DocumentSnapshot {
       case "DateTime":
         return DateTime.parse(value);
       default:
-        throw Exception("scientisst_db cannot encode this type of file");
+        throw Exception(
+            "scientisst_db cannot encode this type of object: $type");
     }
   }
 }

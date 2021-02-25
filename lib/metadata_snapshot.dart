@@ -9,7 +9,8 @@ class MetadataSnapshot {
     _data = data;
   }
 
-  Map<String, String> get fieldsType => _data["fieldsType"];
+  Map<String, String> get fieldsType =>
+      Map<String, String>.from(_data["fieldsType"] ?? {});
   DateTime get createdAt => _data["createdAt"];
   DateTime get lastModified => _data["lastModified"];
 }

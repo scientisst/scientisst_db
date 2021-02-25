@@ -57,7 +57,7 @@ class CollectionReference {
     List<DocumentSnapshot> docs = await getDocuments();
     yield docs;
     await for (WatchEvent event
-        in DirectoryWatcher(await _absoluteDocumentsPath).events) {
+        in DirectoryWatcher(await _absoluteMetadataPath).events) {
       debugPrint(event.toString());
       docs = await getDocuments();
       yield (docs);
@@ -89,8 +89,8 @@ class CollectionReference {
   Future<String> get _absolutePath async =>
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _directoryPath);
 
-  Future<String> get _absoluteDocumentsPath async =>
-      ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _documentsPath);
+  Future<String> get _absoluteMetadataPath async =>
+      ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _metadataPath);
 
   Query where(String field,
       {dynamic isEqualTo,

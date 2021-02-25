@@ -93,7 +93,7 @@ class DocumentReference {
   Future<void> _init() async {
     (await _file).createSync(recursive: true);
     (await _collections).createSync(recursive: true);
-    _metadata.init();
+    await _metadata.init();
   }
 
   Future<void> delete() async {
@@ -111,8 +111,9 @@ class DocumentReference {
     try {
       return jsonDecode((await _file).readAsStringSync());
     } on FormatException catch (e) {
-      print(e);
-      return null;
+      return {};
+    } on FileSystemException catch (e) {
+      throw e;
     }
   }
 
@@ -126,13 +127,14 @@ class DocumentReference {
   Stream<DocumentSnapshot> watch() async* {
     DocumentSnapshot doc = await get();
     yield doc;
-    await for (WatchEvent event in FileWatcher(await _absolutePath).events) {
+    await for (WatchEvent event
+        in FileWatcher(await _absoluteMetadataPath).events) {
       debugPrint(event.toString());
       doc = await get();
       yield doc;
     }
   }
 
-  Future<String> get _absolutePath async =>
-      ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _filePath);
+  Future<String> get _absoluteMetadataPath async =>
+      ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _metadata._path);
 }

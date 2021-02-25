@@ -30,8 +30,9 @@ class _MetadataReference {
     try {
       return jsonDecode((await _file).readAsStringSync());
     } on FormatException catch (e) {
-      print(e);
-      return null;
+      return {};
+    } on FileSystemException catch (e) {
+      throw e;
     }
   }
 

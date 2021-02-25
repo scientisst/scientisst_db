@@ -98,4 +98,7 @@ class ScientISSTdb {
       ),
     );
   }
+
+  Future<void> clearDatabase() async =>
+      (await _getDirectory(DB_PATH)).deleteSync(recursive: true);
 }

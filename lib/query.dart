@@ -97,7 +97,7 @@ class Query {
     List<DocumentSnapshot> docs = await getDocuments();
     yield docs;
     await for (WatchEvent event
-        in DirectoryWatcher(await reference._absoluteDocumentsPath).events) {
+        in DirectoryWatcher(await reference._absoluteMetadataPath).events) {
       debugPrint(event.toString());
       docs = await getDocuments();
       yield (docs);
