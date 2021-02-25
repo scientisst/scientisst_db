@@ -4,8 +4,8 @@ class DocumentReference {
   String objectId;
   CollectionReference parent;
   String _filePath;
-  String _metadataPath;
   String _collectionsPath;
+  _MetadataReference _metadata;
 
   DocumentReference._({@required this.parent, @required String path}) {
     assert(!path.contains(".") && !path.contains("/"));
@@ -13,13 +13,14 @@ class DocumentReference {
     objectId = path;
 
     _filePath = ScientISSTdb._joinPaths(parent._documentsPath, path);
-    _metadataPath = ScientISSTdb._joinPaths(parent._metadataPath, path);
     _collectionsPath = ScientISSTdb._joinPaths(parent._collectionsPath, path);
+
+    final String metadataPath =
+        ScientISSTdb._joinPaths(parent._metadataPath, path);
+    _metadata = _MetadataReference(parent: this, path: metadataPath);
   }
 
   Future<File> get _file async => await ScientISSTdb._getFile(_filePath);
-  Future<File> get _metadata async =>
-      await ScientISSTdb._getFile(_metadataPath);
   Future<Directory> get _collections async =>
       await ScientISSTdb._getDirectory(_collectionsPath);
 
@@ -72,6 +73,8 @@ class DocumentReference {
     await (await _file).writeAsString(
       jsonEncode(data, toEncodable: _myEncode),
     );
+    await _metadata.setLastModified();
+    await _metadata.setFieldTypes(data);
   }
 
   dynamic _myEncode(dynamic item) {
@@ -89,14 +92,14 @@ class DocumentReference {
 
   Future<void> _init() async {
     (await _file).createSync(recursive: true);
-    (await _metadata).createSync(recursive: true);
     (await _collections).createSync(recursive: true);
+    _metadata.init();
   }
 
   Future<void> delete() async {
     (await _file).deleteSync();
-    (await _metadata).deleteSync();
     (await _collections).deleteSync(recursive: true);
+    await _metadata.delete();
     await parent?._deleteEmpty();
   }
 
@@ -114,7 +117,10 @@ class DocumentReference {
   }
 
   Future<DocumentSnapshot> get() async {
-    return DocumentSnapshot(this, await _read());
+    final DocumentSnapshot doc = DocumentSnapshot(this, await _read());
+    final MetadataSnapshot metadata = await _metadata.get();
+    doc._updateFieldsType(metadata.fieldsType);
+    return doc;
   }
 
   Stream<DocumentSnapshot> watch() async* {

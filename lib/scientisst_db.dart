@@ -15,6 +15,8 @@ part 'document_snapshot.dart';
 part 'query.dart';
 part 'file_reference.dart';
 part 'directory_reference.dart';
+part 'metadata_reference.dart';
+part 'metadata_snapshot.dart';
 
 const PACKAGE_PATH = "scientisst_db";
 const DB_PATH = "db";
