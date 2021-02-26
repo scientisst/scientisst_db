@@ -6,7 +6,11 @@ class DirectoryReference {
 
   DirectoryReference._({@required String path, this.parent}) {
     assert(!path.contains(".") && !path.contains("/"));
-    this._path = path;
+    if (parent != null) {
+      _path = ScientISSTdb._joinPaths(parent._path, path);
+    } else {
+      _path = path;
+    }
   }
 
   String get path => _path;
@@ -17,12 +21,12 @@ class DirectoryReference {
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _path);
 
   FileReference file(String path) => FileReference._(
-        path: ScientISSTdb._joinPaths(_path, path),
+        path: path,
         parent: this,
       );
 
   DirectoryReference directory(String path) => DirectoryReference._(
-        path: ScientISSTdb._joinPaths(_path, path),
+        path: path,
         parent: this,
       );
 
@@ -50,10 +54,12 @@ class DirectoryReference {
   }
 
   Future<FileReference> putBytes(Uint8List bytes, String filename) async {
-    assert(!path.contains("/"));
+    assert(!filename.contains("/"));
     final Directory dir = await _dir;
+    print(dir.path);
     dir.create(recursive: true);
-    final File file = File(ScientISSTdb._joinPaths(_path, filename));
+    final File file =
+        await ScientISSTdb._getFile(ScientISSTdb._joinPaths(_path, filename));
     file.writeAsBytesSync(bytes);
     return FileReference._(path: filename, parent: this);
   }

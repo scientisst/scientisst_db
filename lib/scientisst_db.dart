@@ -55,8 +55,7 @@ class ScientISSTdb {
     return _cachedPath;
   }
 
-  DirectoryReference get files =>
-      DirectoryReference._(path: _joinPaths(FILES_PATH));
+  DirectoryReference get files => DirectoryReference._(path: FILES_PATH);
 
   static Future<Directory> _getDirectory([String path]) async =>
       Directory(_joinPaths(await _dbDirPath, path));

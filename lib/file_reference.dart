@@ -5,8 +5,8 @@ class FileReference {
   DirectoryReference parent;
 
   FileReference._({@required String path, this.parent}) {
-    assert(!path.contains(".") && !path.contains("/"));
-    _path = path;
+    assert(!path.contains("/"));
+    _path = ScientISSTdb._joinPaths(parent._path, path);
   }
 
   String get path => _path;

@@ -16,7 +16,7 @@ class _MetadataReference {
     }
   }
 
-  Future<void> delete() async => (await _file).deleteSync(recursive: true);
+  Future<void> delete() async => (await _file).deleteSync();
 
   Future<File> get _file async => await ScientISSTdb._getFile(_path);
 
@@ -52,15 +52,18 @@ class _MetadataReference {
   Future<void> _setCreatedAt() async =>
       await _updateData({"createdAt": DateTime.now()});
 
-  Future<void> setLastModified() async =>
-      await _updateData({"lastModified": DateTime.now()});
+  //Future<void> setLastModified() async =>
+  //await _updateData({"lastModified": DateTime.now()});
 
   Future<void> setFieldTypes(Map<String, dynamic> data) async {
     final Map<String, String> types = data.map(
       (String key, dynamic value) =>
           MapEntry(key, value.runtimeType.toString()),
     );
-    _updateData({"fieldsType": types});
+    await _updateData({
+      "fieldsType": types,
+      "lastModified": DateTime.now(),
+    });
   }
 
   Future<MetadataSnapshot> get() async => MetadataSnapshot(this, await _read());

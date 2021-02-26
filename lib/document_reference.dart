@@ -70,11 +70,10 @@ class DocumentReference {
   }
 
   Future<void> _write(Map<String, dynamic> data) async {
+    await _metadata.setFieldTypes(data);
     await (await _file).writeAsString(
       jsonEncode(data, toEncodable: _myEncode),
     );
-    await _metadata.setLastModified();
-    await _metadata.setFieldTypes(data);
   }
 
   dynamic _myEncode(dynamic item) {
@@ -127,14 +126,13 @@ class DocumentReference {
   Stream<DocumentSnapshot> watch() async* {
     DocumentSnapshot doc = await get();
     yield doc;
-    await for (WatchEvent event
-        in FileWatcher(await _absoluteMetadataPath).events) {
+    await for (WatchEvent event in FileWatcher(await _absolutePath).events) {
       debugPrint(event.toString());
       doc = await get();
       yield doc;
     }
   }
 
-  Future<String> get _absoluteMetadataPath async =>
-      ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _metadata._path);
+  Future<String> get _absolutePath async =>
+      ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _filePath);
 }
