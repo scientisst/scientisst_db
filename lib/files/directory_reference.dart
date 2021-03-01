@@ -1,11 +1,11 @@
-part of 'scientisst_db.dart';
+part of '../scientisst_db.dart';
 
 class DirectoryReference {
   String _path;
   DirectoryReference parent;
 
   DirectoryReference._({@required String path, this.parent}) {
-    assert(!path.contains(".") && !path.contains("/"));
+    assert(path != null && path.isNotEmpty && !path.contains("."));
     if (parent != null) {
       _path = ScientISSTdb._joinPaths(parent._path, path);
     } else {
@@ -13,9 +13,10 @@ class DirectoryReference {
     }
   }
 
-  String get path => _path;
+  String get path => _path.substring(FILES_PATH.length + 1);
 
-  Future<Directory> get _dir async => await ScientISSTdb._getDirectory(_path);
+  Future<Directory> get _directory async =>
+      await ScientISSTdb._getDirectory(_path);
 
   Future<String> get absolutePath async =>
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _path);
@@ -31,7 +32,7 @@ class DirectoryReference {
       );
 
   Future<List<String>> listFiles() async {
-    final Directory dir = await _dir;
+    final Directory dir = await _directory;
     try {
       return List<String>.from(
         dir.listSync().where((file) => file is File).map(
@@ -46,8 +47,8 @@ class DirectoryReference {
   }
 
   Future<FileReference> putFile(File file) async {
-    final Directory dir = await _dir;
-    dir.create(recursive: true);
+    final Directory dir = await _directory;
+    dir.createSync(recursive: true);
     await file
         .copy(ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _path));
     await file.delete();
@@ -55,9 +56,8 @@ class DirectoryReference {
 
   Future<FileReference> putBytes(Uint8List bytes, String filename) async {
     assert(!filename.contains("/"));
-    final Directory dir = await _dir;
-    print(dir.path);
-    dir.create(recursive: true);
+    final Directory dir = await _directory;
+    dir.createSync(recursive: true);
     final File file =
         await ScientISSTdb._getFile(ScientISSTdb._joinPaths(_path, filename));
     file.writeAsBytesSync(bytes);
@@ -73,13 +73,58 @@ class DirectoryReference {
     );
   }
 
+  Future<void> delete() async {
+    (await _directory).deleteSync(recursive: true);
+  }
+
   Future<void> _deleteEmpty() async {
-    final Directory dir = await ScientISSTdb._getDirectory(_path);
     try {
-      await dir.delete();
+      (await _directory).deleteSync();
     } on FileSystemException catch (e) {
       if (e.osError.errorCode != 39)
         throw e; // if error is not "Directory not empty"
+    }
+  }
+
+  Future<File> export() async {
+    ZipFileEncoder encoder = ZipFileEncoder();
+    final String folderName = _path.split("/").last;
+    final String filepath = ScientISSTdb._joinPaths(
+        (await getTemporaryDirectory()).path, '$folderName.files.zip');
+
+    encoder.create(filepath);
+    try {
+      encoder.addDirectory(await _directory);
+    } on FileSystemException catch (e) {
+      if (e.osError.errorCode != 2)
+        throw e; // if error is not "No such file or directory"
+      return null;
+    }
+    encoder.close();
+
+    return File(filepath);
+  }
+
+  Future<void> import(File file) async {
+    // Read the Zip file from disk.
+    final bytes = file.readAsBytesSync();
+    await importFromBytes(bytes);
+  }
+
+  Future<void> importFromBytes(List<int> bytes) async {
+    // Decode the Zip file
+    final archive = ZipDecoder().decodeBytes(bytes);
+    final String folderPath = await absolutePath;
+
+    // Extract the contents of the Zip archive to disk.
+    for (final file in archive) {
+      final filename = file.name;
+      if (file.isFile) {
+        final data = file.content as List<int>;
+        File(ScientISSTdb._joinPaths(folderPath, filename))
+          ..createSync(recursive: true)
+          ..writeAsBytesSync(data);
+      }
     }
   }
 }

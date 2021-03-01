@@ -1,4 +1,4 @@
-part of "scientisst_db.dart";
+part of "../scientisst_db.dart";
 
 class _MetadataReference {
   DocumentReference parent;

@@ -1,4 +1,4 @@
-part of "scientisst_db.dart";
+part of "../scientisst_db.dart";
 
 class DocumentReference {
   String objectId;
@@ -8,7 +8,10 @@ class DocumentReference {
   _MetadataReference _metadata;
 
   DocumentReference._({@required this.parent, @required String path}) {
-    assert(!path.contains(".") && !path.contains("/"));
+    assert(path != null &&
+        path.isNotEmpty &&
+        !path.contains(".") &&
+        !path.contains("/"));
 
     objectId = path;
 
@@ -57,7 +60,7 @@ class DocumentReference {
   }
 
   Future<void> setData(Map<String, dynamic> data, {bool merge: false}) async {
-    await _init();
+    if (!(await _file).existsSync()) await _init();
     if (merge) {
       await updateData(data);
     } else {
@@ -90,9 +93,10 @@ class DocumentReference {
   }
 
   Future<void> _init() async {
-    (await _file).createSync(recursive: true);
-    (await _collections).createSync(recursive: true);
+    if (parent != null && parent.parent != null) await parent.parent._init();
     await _metadata.init();
+    (await _collections).createSync(recursive: true);
+    (await _file).createSync(recursive: true);
   }
 
   Future<void> delete() async {
@@ -102,13 +106,13 @@ class DocumentReference {
     await parent?._deleteEmpty();
   }
 
-  String get id {
-    return objectId;
-  }
+  String get id => objectId;
 
   Future<Map<String, dynamic>> _read() async {
     try {
-      return jsonDecode((await _file).readAsStringSync());
+      final Map<String, dynamic> data =
+          jsonDecode((await _file).readAsStringSync());
+      return _updateFieldsType(data, (await _metadata.get()).fieldsType);
     } on FormatException catch (e) {
       return {};
     } on FileSystemException catch (e) {
@@ -117,22 +121,91 @@ class DocumentReference {
   }
 
   Future<DocumentSnapshot> get() async {
-    final DocumentSnapshot doc = DocumentSnapshot(this, await _read());
     final MetadataSnapshot metadata = await _metadata.get();
-    doc._updateFieldsType(metadata.fieldsType);
-    return doc;
+    return DocumentSnapshot(this, await _read(), metadata);
   }
 
   Stream<DocumentSnapshot> watch() async* {
     DocumentSnapshot doc = await get();
     yield doc;
     await for (WatchEvent event in FileWatcher(await _absolutePath).events) {
-      debugPrint(event.toString());
       doc = await get();
       yield doc;
     }
   }
 
+  static dynamic _convertToType(dynamic value, String type) {
+    switch (type) {
+      case "DateTime":
+        return DateTime.parse(value);
+      default:
+        throw Exception(
+            "scientisst_db cannot encode this type of object: $type");
+    }
+  }
+
+  static Map<String, dynamic> _updateFieldsType(
+      Map<String, dynamic> data, Map<String, String> fieldsType) {
+    if (fieldsType.isNotEmpty) {
+      return data.map(
+        (String key, dynamic value) {
+          if (value.runtimeType.toString() == fieldsType[key]) {
+            return MapEntry(key, value);
+          } else {
+            return MapEntry(
+              key,
+              _convertToType(
+                value,
+                fieldsType[key],
+              ),
+            );
+          }
+        },
+      );
+    }
+  }
+
   Future<String> get _absolutePath async =>
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _filePath);
+
+  Future<File> export() async {
+    ZipFileEncoder encoder = ZipFileEncoder();
+
+    final String filepath = ScientISSTdb._joinPaths(
+        (await getTemporaryDirectory()).path, '$id.db.zip');
+    encoder.create(filepath);
+    try {
+      encoder.addFile(await _file, "document");
+    } on FileSystemException catch (e) {
+      if (e.osError.errorCode != 2)
+        throw e; // if error is not "No such file or directory"
+      return null;
+    }
+
+    encoder.addFile(await _metadata._file, "metadata");
+    encoder.addDirectory(await _collections, includeDirName: false);
+    encoder.close();
+
+    return File(filepath);
+  }
+
+  Future<void> import(File file) async {
+    // TODO
+    // Read the Zip file from disk.
+    final bytes = file.readAsBytesSync();
+
+    // Decode the Zip file
+    final archive = ZipDecoder().decodeBytes(bytes);
+
+    // Extract the contents of the Zip archive to disk.
+    for (final file in archive) {
+      final filename = file.name;
+      print(filename);
+      /*if (file.isFile) {
+        final data = file.content as List<int>;
+      } else {
+        Directory('out/' + filename)..create(recursive: true);
+      }*/
+    }
+  }
 }

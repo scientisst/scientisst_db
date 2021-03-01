@@ -1,4 +1,4 @@
-part of "scientisst_db.dart";
+part of "../scientisst_db.dart";
 
 class CollectionReference {
   String _directoryPath;
@@ -8,7 +8,10 @@ class CollectionReference {
   final DocumentReference parent;
 
   CollectionReference._({@required this.parent, @required path}) {
-    assert(!path.contains(".") && !path.contains("/"));
+    assert(path != null &&
+        path.isNotEmpty &&
+        !path.contains(".") &&
+        !path.contains("/"));
     if (parent != null) {
       _directoryPath = ScientISSTdb._joinPaths(parent._collectionsPath, path);
     } else {
@@ -58,7 +61,6 @@ class CollectionReference {
     yield docs;
     await for (WatchEvent event
         in DirectoryWatcher(await _absoluteDocumentsPath).events) {
-      debugPrint("${DateTime.now()} ${event}");
       docs = await getDocuments();
       yield (docs);
     }
@@ -124,4 +126,51 @@ class CollectionReference {
           ),
         ],
       );
+
+  Future<File> export() async {
+    // TODO
+    ZipFileEncoder encoder = ZipFileEncoder();
+    final String collectionName = _directoryPath.split("/").last;
+    final String filepath = ScientISSTdb._joinPaths(
+        (await getTemporaryDirectory()).path, '$collectionName.zip');
+    encoder.zipDirectory(await _directory, filename: filepath);
+  }
+
+  Future<void> import(File file) async {
+    if (file.path.endsWith(".db.zip")) {
+      // Read the Zip file from disk.
+      final bytes = file.readAsBytesSync();
+      final String id = file.path.split("/").last.split(".").first;
+
+      await importFromBytes(bytes, id);
+    } else {
+      throw Exception("This is not a db file");
+    }
+  }
+
+  Future<void> importFromBytes(List<int> bytes, String id) async {
+    // Decode the Zip file
+    final Archive archive = ZipDecoder().decodeBytes(bytes);
+
+    final DocumentReference doc = document(id);
+    await doc._init();
+    final String collectionsPath = (await doc._collections).path;
+
+    // Extract the contents of the Zip archive to disk.
+    for (final ArchiveFile file in archive) {
+      final filename = file.name;
+      if (file.isFile) {
+        final List<int> data = file.content as List<int>;
+        if (filename == "document") {
+          (await doc._file).writeAsBytesSync(data);
+        } else if (filename == "metadata") {
+          (await doc._metadata._file).writeAsBytesSync(data);
+        } else {
+          File(ScientISSTdb._joinPaths(collectionsPath, file.name))
+            ..createSync(recursive: true)
+            ..writeAsBytesSync(data);
+        }
+      }
+    }
+  }
 }

@@ -1,4 +1,4 @@
-part of 'scientisst_db.dart';
+part of '../scientisst_db.dart';
 
 enum Operator {
   isEqualTo,
@@ -98,8 +98,6 @@ class Query {
     yield docs;
     await for (WatchEvent event
         in DirectoryWatcher(await reference._absoluteDocumentsPath).events) {
-      print(reference._collectionsPath);
-      debugPrint(event.toString());
       docs = await getDocuments();
       yield (docs);
     }

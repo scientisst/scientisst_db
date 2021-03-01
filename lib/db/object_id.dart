@@ -1,4 +1,4 @@
-part of 'scientisst_db.dart';
+part of '../scientisst_db.dart';
 
 const MAXIMUM_RANDOM_START = 16777216; // 3 bytes - 24 bits
 const MAXIMUM_RANDOM_END = 65536; // 2 bytes - 16 bits

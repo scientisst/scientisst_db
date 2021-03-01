@@ -1,15 +1,15 @@
-part of 'scientisst_db.dart';
+part of '../scientisst_db.dart';
 
 class FileReference {
   String _path;
   DirectoryReference parent;
 
   FileReference._({@required String path, this.parent}) {
-    assert(!path.contains("/"));
+    assert(path != null && path.isNotEmpty);
     _path = ScientISSTdb._joinPaths(parent._path, path);
   }
 
-  String get path => _path;
+  String get path => _path.substring(FILES_PATH.length + 1);
   String get name => _path.split("/").last;
   Future<String> get absolutePath async =>
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _path);

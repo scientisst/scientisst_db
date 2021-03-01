@@ -7,16 +7,17 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:watcher/watcher.dart';
+import 'package:archive/archive_io.dart';
 
-part 'document_reference.dart';
-part 'collection_reference.dart';
-part 'object_id.dart';
-part 'document_snapshot.dart';
-part 'query.dart';
-part 'file_reference.dart';
-part 'directory_reference.dart';
-part 'metadata_reference.dart';
-part 'metadata_snapshot.dart';
+part 'db/document_reference.dart';
+part 'db/collection_reference.dart';
+part 'db/object_id.dart';
+part 'db/document_snapshot.dart';
+part 'db/query.dart';
+part 'db/metadata_reference.dart';
+part 'db/metadata_snapshot.dart';
+part 'files/file_reference.dart';
+part 'files/directory_reference.dart';
 
 const PACKAGE_PATH = "scientisst_db";
 const DB_PATH = "db";
@@ -25,7 +26,9 @@ const FILES_PATH = "files";
 const MAXIMUM_COUNTER = 16777216; // 3 bytes
 
 class ScientISSTdb {
-  static Future<Directory> _rootDir = getApplicationDocumentsDirectory();
+  static Future<Directory> _rootDir = Platform.isIOS
+      ? getLibraryDirectory()
+      : getApplicationDocumentsDirectory();
   static ScientISSTdb _cachedInstance;
   static String _cachedPath;
   int _counterVal = Random().nextInt(MAXIMUM_COUNTER) - 1;
@@ -98,6 +101,13 @@ class ScientISSTdb {
     );
   }
 
-  Future<void> clearDatabase() async =>
+  static Future<void> clearDatabase() async {
+    try {
       (await _getDirectory(DB_PATH)).deleteSync(recursive: true);
+    } on FileSystemException catch (e) {
+      if (e.osError.errorCode != 2)
+        throw e; // if error is not "No such file or directory"
+      return;
+    }
+  }
 }
