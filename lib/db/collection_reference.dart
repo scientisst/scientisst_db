@@ -117,12 +117,12 @@ class CollectionReference {
     );
   }
 
-  Query orderBy(String field, {bool ascending = false}) => Query._(
+  Query orderBy(String field, {bool descending = false}) => Query._(
         this,
         [
           Query._getOrderBy(
             field: field,
-            ascending: ascending,
+            descending: descending,
           ),
         ],
       );

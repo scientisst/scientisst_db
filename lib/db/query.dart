@@ -41,8 +41,8 @@ class Query {
     return Where(field: field, operator: operator, value: value);
   }
 
-  static OrderBy _getOrderBy({@required String field, bool ascending}) =>
-      OrderBy(field: field, ascending: ascending);
+  static OrderBy _getOrderBy({@required String field, bool descending}) =>
+      OrderBy(field: field, descending: descending);
 
   Future<List<String>> listDocuments() async {
     final Directory documents = await reference._documents;
@@ -84,7 +84,7 @@ class Query {
             (DocumentSnapshot doc1, DocumentSnapshot doc2) => _compare(
               doc1.data[orderByCondition.field],
               doc2.data[orderByCondition.field],
-              ascending: orderByCondition.ascending,
+              descending: orderByCondition.descending,
             ),
           );
         }
@@ -103,16 +103,20 @@ class Query {
     }
   }
 
-  int _compare(dynamic value1, dynamic value2, {bool ascending: true}) {
-    int _ascending = (ascending ? 1 : -1);
+  int _compare(dynamic value1, dynamic value2, {bool descending: false}) {
+    int _descending = (descending ? 1 : -1);
     if (value1 is num && value2 is num) {
       if (value1 == value2) return 0;
       if (value1 > value2)
-        return 1 * _ascending;
+        return 1 * _descending;
       else
-        return -1 * _ascending;
+        return -1 * _descending;
     } else if (value1 is String && value2 is String) {
-      return value1.compareTo(value2) * _ascending;
+      return value1.compareTo(value2) * _descending;
+    } else if (value1 is DateTime && value2 is DateTime) {
+      if (value1.isAtSameMomentAs(value2)) return 0;
+      if (value1.isBefore(value2)) return 1 * _descending;
+      return -1 * _descending;
     } else {
       return 0;
     }
@@ -191,11 +195,11 @@ class Query {
     );
   }
 
-  Query orderBy(String field, {bool ascending = false}) => Query._(
+  Query orderBy(String field, {bool descending = false}) => Query._(
         reference,
         _query
           ..addAll(
-            [_getOrderBy(field: field, ascending: ascending)],
+            [_getOrderBy(field: field, descending: descending)],
           ),
       );
 }
@@ -204,8 +208,8 @@ class Condition {}
 
 class OrderBy extends Condition {
   final String field;
-  final bool ascending;
-  OrderBy({@required this.field, this.ascending = false});
+  final bool descending;
+  OrderBy({@required this.field, this.descending = false});
 }
 
 class Where extends Condition {
