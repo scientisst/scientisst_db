@@ -73,7 +73,7 @@ class CollectionReference {
   Future<DocumentReference> add(Map<String, dynamic> data) async {
     final DocumentReference document =
         DocumentReference._(parent: this, path: ObjectId().id);
-    await document.setData(data);
+    await document.set(data);
     return document;
   }
 
