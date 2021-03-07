@@ -59,10 +59,10 @@ class DocumentReference {
     );
   }
 
-  Future<void> setData(Map<String, dynamic> data, {bool merge: false}) async {
+  Future<void> set(Map<String, dynamic> data, {bool merge: false}) async {
     if (!(await _file).existsSync()) await _init();
     if (merge) {
-      await updateData(data);
+      await update(data);
     } else {
       if (data == null || data.isEmpty) {
         await delete();
@@ -86,7 +86,7 @@ class DocumentReference {
     return item;
   }
 
-  Future<void> updateData(Map<String, dynamic> data) async {
+  Future<void> update(Map<String, dynamic> data) async {
     Map<String, dynamic> _data = await _read();
     _data.addAll(data);
     await _write(_data);
@@ -190,23 +190,7 @@ class DocumentReference {
     return result;
   }
 
-  //Future<void> import(File file) async {
-  //// TODO
-  //// Read the Zip file from disk.
-  //final bytes = file.readAsBytesSync();
-
-  //// Decode the Zip file
-  //final archive = ZipDecoder().decodeBytes(bytes);
-
-  //// Extract the contents of the Zip archive to disk.
-  //for (final file in archive) {
-  //final filename = file.name;
-  //print(filename);
-  //[>if (file.isFile) {
-  //final data = file.content as List<int>;
-  //} else {
-  //Directory('out/' + filename)..create(recursive: true);
-  //}*/
-  //}
-  //}
+  Future<void> import(File file) async {
+    // TODO
+  }
 }
