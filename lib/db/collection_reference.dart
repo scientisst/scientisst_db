@@ -131,14 +131,10 @@ class CollectionReference {
         ],
       );
 
-  /*Future<Directory> export() async {
+  Future<Directory> export() async {
     // TODO
-    ZipFileEncoder encoder = ZipFileEncoder();
-    final String collectionName = _directoryPath.split("/").last;
-    final String filepath = ScientISSTdb._joinPaths(
-        (await getTemporaryDirectory()).path, '$collectionName.zip');
-    encoder.zipDirectory(await _directory, filename: filepath);
-  }*/
+    return null;
+  }
 
   bool _validateImport(Directory directory) {
     //final String documentName = directory.path.split("/").last.split(".").first;
@@ -168,8 +164,9 @@ class CollectionReference {
     return true;
   }
 
-  Future<void> import(Directory directory) async {
-    if (directory.path.endsWith(".db")) {
+  Future<void> import(dynamic directory) async {
+    assert(directory is Directory || directory is File);
+    if (directory is Directory && directory.path.endsWith(".db")) {
       if (_validateImport(directory)) {
         final String documentName =
             directory.path.split("/").last.split(".").first;
@@ -196,8 +193,10 @@ class CollectionReference {
         metadata.copySync(metadataPath);
         ScientISSTdb._copyDirectory(collections, collectionsPath);
       }
+    } else if (directory is File) {
+      // TODO
     } else {
-      throw Exception("This is not a db file");
+      throw Exception("Invalid file");
     }
   }
 }

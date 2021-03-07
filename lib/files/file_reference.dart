@@ -38,4 +38,8 @@ class FileReference {
     _file.deleteSync();
     await parent?._deleteEmpty();
   }
+
+  Future<File> export() async {
+    return null; // TODO
+  }
 }
