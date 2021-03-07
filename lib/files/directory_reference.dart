@@ -86,45 +86,27 @@ class DirectoryReference {
     }
   }
 
-  Future<File> export() async {
-    ZipFileEncoder encoder = ZipFileEncoder();
+  Future<Directory> export({String dest}) async {
     final String folderName = _path.split("/").last;
-    final String filepath = ScientISSTdb._joinPaths(
-        (await getTemporaryDirectory()).path, '$folderName.files.zip');
+    final String destPath = dest ?? (await getTemporaryDirectory()).path;
 
-    encoder.create(filepath);
-    try {
-      encoder.addDirectory(await _directory);
-    } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 2)
-        throw e; // if error is not "No such file or directory"
-      return null;
-    }
-    encoder.close();
+    final String folderPath =
+        ScientISSTdb._joinPaths(destPath, '$folderName.files');
 
-    return File(filepath);
+    ScientISSTdb._copyDirectory(await _directory, folderPath);
+
+    return Directory(folderPath);
   }
 
-  Future<void> import(File file) async {
-    // Read the Zip file from disk.
-    final bytes = file.readAsBytesSync();
-    await importFromBytes(bytes);
-  }
+  Future<void> import(Directory directory) async {
+    if (directory.path.endsWith(".files")) {
+      final String folderName = directory.path.split("/").last.split(".").first;
+      final String destPath =
+          ScientISSTdb._joinPaths(await absolutePath, folderName);
 
-  Future<void> importFromBytes(List<int> bytes) async {
-    // Decode the Zip file
-    final archive = ZipDecoder().decodeBytes(bytes);
-    final String folderPath = await absolutePath;
-
-    // Extract the contents of the Zip archive to disk.
-    for (final file in archive) {
-      final filename = file.name;
-      if (file.isFile) {
-        final data = file.content as List<int>;
-        File(ScientISSTdb._joinPaths(folderPath, filename))
-          ..createSync(recursive: true)
-          ..writeAsBytesSync(data);
-      }
+      ScientISSTdb._copyDirectory(directory, destPath);
+    } else {
+      throw Exception("This is not a files file");
     }
   }
 }

@@ -113,7 +113,7 @@ class DocumentReference {
       final Map<String, dynamic> data =
           jsonDecode((await _file).readAsStringSync());
       return _updateFieldsType(data, (await _metadata.get()).fieldsType);
-    } on FormatException catch (e) {
+    } on FormatException catch (_) {
       return {};
     } on FileSystemException catch (e) {
       throw e;
@@ -128,7 +128,7 @@ class DocumentReference {
   Stream<DocumentSnapshot> watch() async* {
     DocumentSnapshot doc = await get();
     yield doc;
-    await for (WatchEvent event in FileWatcher(await _absolutePath).events) {
+    await for (WatchEvent _ in FileWatcher(await _absolutePath).events) {
       doc = await get();
       yield doc;
     }
@@ -168,44 +168,45 @@ class DocumentReference {
   Future<String> get _absolutePath async =>
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _filePath);
 
-  Future<File> export() async {
-    ZipFileEncoder encoder = ZipFileEncoder();
+  Future<Directory> export({String dest}) async {
+    final String path = ScientISSTdb._joinPaths(
+        dest ?? (await getTemporaryDirectory()).path, '$id.db');
 
-    final String filepath = ScientISSTdb._joinPaths(
-        (await getTemporaryDirectory()).path, '$id.db.zip');
-    encoder.create(filepath);
-    try {
-      encoder.addFile(await _file, "document");
-    } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 2)
-        throw e; // if error is not "No such file or directory"
-      return null;
-    }
+    final result = Directory(path);
+    result.createSync(recursive: true);
 
-    encoder.addFile(await _metadata._file, "metadata");
-    encoder.addDirectory(await _collections, includeDirName: false);
-    encoder.close();
+    final File document = await _file;
+    final File metadata = await _metadata._file;
+    final Directory collections = await _collections;
 
-    return File(filepath);
+    final String documentPath = ScientISSTdb._joinPaths(path, "document");
+    final String metadataPath = ScientISSTdb._joinPaths(path, "metadata");
+    final String collectionsPath = ScientISSTdb._joinPaths(path, "collections");
+
+    document.copySync(documentPath);
+    metadata.copySync(metadataPath);
+    ScientISSTdb._copyDirectory(collections, collectionsPath);
+
+    return result;
   }
 
-  Future<void> import(File file) async {
-    // TODO
-    // Read the Zip file from disk.
-    final bytes = file.readAsBytesSync();
+  //Future<void> import(File file) async {
+  //// TODO
+  //// Read the Zip file from disk.
+  //final bytes = file.readAsBytesSync();
 
-    // Decode the Zip file
-    final archive = ZipDecoder().decodeBytes(bytes);
+  //// Decode the Zip file
+  //final archive = ZipDecoder().decodeBytes(bytes);
 
-    // Extract the contents of the Zip archive to disk.
-    for (final file in archive) {
-      final filename = file.name;
-      print(filename);
-      /*if (file.isFile) {
-        final data = file.content as List<int>;
-      } else {
-        Directory('out/' + filename)..create(recursive: true);
-      }*/
-    }
-  }
+  //// Extract the contents of the Zip archive to disk.
+  //for (final file in archive) {
+  //final filename = file.name;
+  //print(filename);
+  //[>if (file.isFile) {
+  //final data = file.content as List<int>;
+  //} else {
+  //Directory('out/' + filename)..create(recursive: true);
+  //}*/
+  //}
+  //}
 }

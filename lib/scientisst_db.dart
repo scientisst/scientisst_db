@@ -7,7 +7,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:watcher/watcher.dart';
-import 'package:archive/archive_io.dart';
 
 part 'db/document_reference.dart';
 part 'db/collection_reference.dart';
@@ -26,9 +25,10 @@ const FILES_PATH = "files";
 const MAXIMUM_COUNTER = 16777216; // 3 bytes
 
 class ScientISSTdb {
-  static Future<Directory> _rootDir = Platform.isIOS
-      ? getLibraryDirectory()
-      : getApplicationDocumentsDirectory();
+  static Future<Directory> _rootDir =
+      Platform.isIOS ? getLibraryDirectory() : getExternalStorageDirectory();
+  //: getApplicationDocumentsDirectory();
+
   static ScientISSTdb _cachedInstance;
   static String _cachedPath;
   int _counterVal = Random().nextInt(MAXIMUM_COUNTER) - 1;
@@ -67,10 +67,35 @@ class ScientISSTdb {
       File(_joinPaths(await _dbDirPath, path));
 
   static String _joinPaths(dynamic paths, [String path2]) {
-    if (path2 == null)
-      return (paths as List<String>).join("/");
-    else
+    assert(paths != null);
+    if (paths is String && path2 is String && path2 != null) {
+      paths = _trimPath(paths);
+      path2 = _trimPath(path2);
       return "$paths/$path2";
+    } else if (paths is List<String>) {
+      paths = List<String>.from(
+        paths.map(
+          (String path) => _trimPath(path),
+        ),
+      );
+      return paths.join("/");
+    } else {
+      throw Exception("Cannot join invalid paths: $paths, ${path2 ?? ""}");
+    }
+  }
+
+  static String _trimPath(String path) {
+    if (path.startsWith("/")) {
+      if (path.endsWith("/"))
+        return path.substring(1, path.length - 1);
+      else
+        return path.substring(1);
+    } else {
+      if (path.endsWith("/"))
+        return path.substring(0, path.length - 1);
+      else
+        return path;
+    }
   }
 
   CollectionReference collection(String path) {
@@ -109,5 +134,32 @@ class ScientISSTdb {
         throw e; // if error is not "No such file or directory"
       return;
     }
+  }
+
+  static void _copyDirectory(Directory directory, String path) {
+    Directory dest = Directory(path);
+    if (!dest.existsSync()) dest.createSync(recursive: true);
+
+    directory.listSync(recursive: true).forEach(
+      (FileSystemEntity file) {
+        final String relativePath = file.path.substring(directory.path.length);
+        final String newPath = _joinPaths(path, relativePath);
+        if (file is File) {
+          _checkCreateDir(newPath);
+          file.copySync(newPath);
+        } else if (file is Directory) {
+          final Directory newDir = Directory(newPath);
+          if (!newDir.existsSync()) newDir.create(recursive: true);
+        }
+      },
+    );
+  }
+
+  static void _checkCreateDir(String filepath) {
+    List<String> parts = filepath.split("/");
+    if (parts.length > 1) {
+      parts = parts.sublist(0, parts.length - 1);
+    }
+    Directory(parts.join("/")).createSync(recursive: true);
   }
 }

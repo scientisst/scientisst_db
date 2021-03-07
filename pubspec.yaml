@@ -13,7 +13,6 @@ dependencies:
     sdk: flutter
   path_provider: ^1.6.27
   watcher: ^0.9.7+15
-  archive: ^2.0.13
 
 dev_dependencies:
   flutter_test:
