@@ -27,8 +27,8 @@ const MAXIMUM_COUNTER = 16777216; // 3 bytes
 class ScientISSTdb {
   static Future<Directory> _rootDir = Platform.isIOS
       ? getLibraryDirectory()
-      //: getExternalStorageDirectory();
       : getApplicationDocumentsDirectory();
+  //: getExternalStorageDirectory();
 
   static ScientISSTdb _cachedInstance;
   static String _cachedPath;
