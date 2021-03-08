@@ -1,3 +1,9 @@
+## [0.0.3] - Metadata, import/export
+
+- Updated metadata fields
+- Added import/export methods
+- Fixed some bugs of the previous version
+
 ## [0.0.2] - Files, Watch
 
 - Added a parallel database to store files
