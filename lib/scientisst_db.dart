@@ -25,9 +25,10 @@ const FILES_PATH = "files";
 const MAXIMUM_COUNTER = 16777216; // 3 bytes
 
 class ScientISSTdb {
-  static Future<Directory> _rootDir =
-      Platform.isIOS ? getLibraryDirectory() : getExternalStorageDirectory();
-  //: getApplicationDocumentsDirectory();
+  static Future<Directory> _rootDir = Platform.isIOS
+      ? getLibraryDirectory()
+      //: getExternalStorageDirectory();
+      : getApplicationDocumentsDirectory();
 
   static ScientISSTdb _cachedInstance;
   static String _cachedPath;

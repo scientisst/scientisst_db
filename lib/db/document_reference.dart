@@ -82,6 +82,8 @@ class DocumentReference {
   dynamic _myEncode(dynamic item) {
     if (item is DateTime) {
       return item.toIso8601String();
+    } else if (item is List) {
+      return List<dynamic>.from(item);
     }
     return item;
   }
@@ -138,6 +140,8 @@ class DocumentReference {
     switch (type) {
       case "DateTime":
         return DateTime.parse(value);
+      case "List<String>":
+        return List<String>.from(value);
       default:
         throw Exception(
             "scientisst_db cannot encode this type of object: $type");
