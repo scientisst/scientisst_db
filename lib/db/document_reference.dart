@@ -1,5 +1,14 @@
 part of "../scientisst_db.dart";
 
+const Map<String, Type> _parseType = {
+  "num": num,
+  "int": int,
+  "double": double,
+  "DateTime": DateTime,
+  "List": List,
+  "String": String,
+};
+
 class DocumentReference {
   String objectId;
   CollectionReference parent;
@@ -82,6 +91,12 @@ class DocumentReference {
   dynamic _myEncode(dynamic item) {
     if (item is DateTime) {
       return item.toIso8601String();
+    } else if (item is List<DateTime>) {
+      return List<dynamic>.from(
+        item.map(
+          (DateTime i) => i.toIso8601String(),
+        ),
+      );
     } else if (item is List) {
       return List<dynamic>.from(item);
     }
@@ -112,9 +127,24 @@ class DocumentReference {
 
   Future<Map<String, dynamic>> _read() async {
     try {
-      final Map<String, dynamic> data =
-          jsonDecode((await _file).readAsStringSync());
-      return _updateFieldsType(data, (await _metadata.get()).fieldsType);
+      final Map<String, String> fieldsType = (await _metadata.get()).fieldsType;
+      return jsonDecode(
+        (await _file).readAsStringSync(),
+        reviver: fieldsType.isEmpty
+            ? null
+            : (key, value) {
+                if (key is String) {
+                  final String type = fieldsType[key];
+                  if (value.runtimeType != _parseType[type] && type != "List") {
+                    return _convertToType(
+                      value,
+                      type,
+                    );
+                  }
+                }
+                return value;
+              },
+      );
     } on FormatException catch (_) {
       return {};
     } on FileSystemException catch (e) {
@@ -140,32 +170,15 @@ class DocumentReference {
     switch (type) {
       case "DateTime":
         return DateTime.parse(value);
-      case "List<String>":
-        return List<String>.from(value);
+      case "List<DateTime>":
+        return List<DateTime>.from(
+          (value as List<dynamic>).map(
+            (dynamic item) => DateTime.parse(item),
+          ),
+        );
       default:
         throw Exception(
-            "scientisst_db cannot encode this type of object: $type");
-    }
-  }
-
-  static Map<String, dynamic> _updateFieldsType(
-      Map<String, dynamic> data, Map<String, String> fieldsType) {
-    if (fieldsType.isNotEmpty) {
-      return data.map(
-        (String key, dynamic value) {
-          if (value.runtimeType.toString() == fieldsType[key]) {
-            return MapEntry(key, value);
-          } else {
-            return MapEntry(
-              key,
-              _convertToType(
-                value,
-                fieldsType[key],
-              ),
-            );
-          }
-        },
-      );
+            "scientisst_db cannot cast this type of object - Value: $value, Type: ${value.runtimeType.toString()} - into $type");
     }
   }
 
