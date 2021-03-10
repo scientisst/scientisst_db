@@ -1,3 +1,8 @@
+## [0.0.4] - Metadata field types parsing
+
+- Updated metadata field types parsing
+- Fixed some bugs of the previous version
+
 ## [0.0.3] - Metadata, import/export
 
 - Updated metadata fields
