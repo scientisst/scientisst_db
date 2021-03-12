@@ -87,7 +87,8 @@ class CollectionReference {
           .delete(); // if this deletes, it is safe to delete directory recursively
       (await _directory).deleteSync(recursive: true);
     } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 39)
+      if ((Platform.isAndroid && e.osError.errorCode != 39) ||
+          (Platform.isIOS && e.osError.errorCode != 66))
         throw e; // if error is not "Directory not empty"
     }
   }
