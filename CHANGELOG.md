@@ -1,3 +1,7 @@
+## [0.0.5] - Fixed metadata field types
+
+- Updated metadata field types parsing to fixed types
+
 ## [0.0.4] - Metadata field types parsing
 
 - Updated metadata field types parsing

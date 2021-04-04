@@ -1,6 +1,6 @@
 name: scientisst_db
 description: Simple and powerful NoSQL document-based local database.
-version: 0.0.4
+version: 0.0.5
 homepage: https://scientisst.com
 repository: https://github.com/scientisst/scientisst_db
 

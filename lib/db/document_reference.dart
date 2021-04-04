@@ -134,13 +134,10 @@ class DocumentReference {
             ? null
             : (key, value) {
                 if (key is String) {
-                  final String type = fieldsType[key];
-                  if (value.runtimeType != _parseType[type] && type != "List") {
-                    return _convertToType(
-                      value,
-                      type,
-                    );
-                  }
+                  return _convertToType(
+                    value,
+                    fieldsType[key],
+                  );
                 }
                 return value;
               },
@@ -167,19 +164,23 @@ class DocumentReference {
   }
 
   static dynamic _convertToType(dynamic value, String type) {
-    switch (type) {
-      case "DateTime":
-        return DateTime.parse(value);
-      case "List<DateTime>":
-        return List<DateTime>.from(
-          (value as List<dynamic>).map(
-            (dynamic item) => DateTime.parse(item),
-          ),
-        );
-      default:
-        throw Exception(
-            "scientisst_db cannot cast this type of object - Value: $value, Type: ${value.runtimeType.toString()} - into $type");
-    }
+    if (type == "num" ||
+        type == "double" ||
+        type == "int" ||
+        type == "String" ||
+        type == "List")
+      return value;
+    else if (type == "DateTime")
+      return DateTime.parse(value);
+    else if (type == "List<DateTime>")
+      return List<DateTime>.from(
+        (value as List<dynamic>).map(
+          (dynamic item) => DateTime.parse(item),
+        ),
+      );
+    else
+      throw Exception(
+          "scientisst_db cannot cast this type of object - Value: $value, Type: ${value.runtimeType.toString()} - into $type");
   }
 
   Future<String> get _absolutePath async =>

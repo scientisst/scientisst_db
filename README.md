@@ -13,7 +13,7 @@ Made by the [ScientISST](https://scientisst.com) team.
 dependencies:
   flutter:
     sdk: flutter
-  scientisst_db: ^0.0.4
+  scientisst_db: ^0.0.5
 ```
 
 ## Architecture
