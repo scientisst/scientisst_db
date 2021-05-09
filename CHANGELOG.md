@@ -1,3 +1,7 @@
+## [0.0.6] 
+
+- Added support to Null objects
+
 ## [0.0.5] - Fixed metadata field types
 
 - Updated metadata field types parsing to fixed types

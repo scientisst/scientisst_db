@@ -178,6 +178,8 @@ class DocumentReference {
           (dynamic item) => DateTime.parse(item),
         ),
       );
+    else if (type == "Null")
+      return null;
     else
       throw Exception(
           "scientisst_db cannot cast this type of object - Value: $value, Type: ${value.runtimeType.toString()} - into $type");

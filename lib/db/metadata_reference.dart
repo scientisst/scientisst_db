@@ -74,6 +74,8 @@ class _MetadataReference {
         }
         return "List";
       }
+    } else if (item == null) {
+      return "Null";
     } else if (item is DateTime) return "DateTime";
     throw "Data type not supported: ${item.runtimeType}";
   }
