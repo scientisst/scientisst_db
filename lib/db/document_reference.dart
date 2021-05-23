@@ -1,14 +1,5 @@
 part of "../scientisst_db.dart";
 
-const Map<String, Type> _parseType = {
-  "num": num,
-  "int": int,
-  "double": double,
-  "DateTime": DateTime,
-  "List": List,
-  "String": String,
-};
-
 class DocumentReference {
   String objectId;
   CollectionReference parent;
@@ -167,6 +158,7 @@ class DocumentReference {
     if (type == "num" ||
         type == "double" ||
         type == "int" ||
+        type == "bool" ||
         type == "String" ||
         type == "List")
       return value;

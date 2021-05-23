@@ -67,6 +67,8 @@ class _MetadataReference {
       return "num";
     else if (item is String)
       return "String";
+    else if (item is bool)
+      return "bool";
     else if (item is List) {
       if (!(item is List<List>)) {
         if (item is List<DateTime>) {
