@@ -1,8 +1,12 @@
-## [0.0.7] 
+## [0.0.8]
+
+- Removed import/export methods
+
+## [0.0.7]
 
 - Added support to bool objects
 
-## [0.0.6] 
+## [0.0.6]
 
 - Added support to Null objects
 

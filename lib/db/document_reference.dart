@@ -179,30 +179,4 @@ class DocumentReference {
 
   Future<String> get _absolutePath async =>
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _filePath);
-
-  Future<Directory> export({String dest}) async {
-    final String path = ScientISSTdb._joinPaths(
-        dest ?? (await getTemporaryDirectory()).path, '$id.db');
-
-    final result = Directory(path);
-    result.createSync(recursive: true);
-
-    final File document = await _file;
-    final File metadata = await _metadata._file;
-    final Directory collections = await _collections;
-
-    final String documentPath = ScientISSTdb._joinPaths(path, "document");
-    final String metadataPath = ScientISSTdb._joinPaths(path, "metadata");
-    final String collectionsPath = ScientISSTdb._joinPaths(path, "collections");
-
-    document.copySync(documentPath);
-    metadata.copySync(metadataPath);
-    ScientISSTdb._copyDirectory(collections, collectionsPath);
-
-    return result;
-  }
-
-  Future<void> import(File file) async {
-    // TODO
-  }
 }

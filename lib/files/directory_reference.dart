@@ -85,28 +85,4 @@ class DirectoryReference {
         throw e; // if error is not "Directory not empty"
     }
   }
-
-  Future<Directory> export({String dest}) async {
-    final String folderName = _path.split("/").last;
-    final String destPath = dest ?? (await getTemporaryDirectory()).path;
-
-    final String folderPath =
-        ScientISSTdb._joinPaths(destPath, '$folderName.files');
-
-    ScientISSTdb._copyDirectory(await _directory, folderPath);
-
-    return Directory(folderPath);
-  }
-
-  Future<void> import(Directory directory) async {
-    if (directory.path.endsWith(".files")) {
-      final String folderName = directory.path.split("/").last.split(".").first;
-      final String destPath =
-          ScientISSTdb._joinPaths(await absolutePath, folderName);
-
-      ScientISSTdb._copyDirectory(directory, destPath);
-    } else {
-      throw Exception("This is not a files file");
-    }
-  }
 }
