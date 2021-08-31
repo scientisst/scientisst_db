@@ -1,9 +1,9 @@
 part of '../scientisst_db.dart';
 
 class DocumentSnapshot {
-  DocumentReference reference;
-  Map<String, dynamic> data;
-  MetadataSnapshot metadata;
+  final DocumentReference reference;
+  final Map<String, dynamic> data;
+  final MetadataSnapshot metadata;
 
   DocumentSnapshot(this.reference, this.data, this.metadata);
 

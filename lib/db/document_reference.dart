@@ -1,25 +1,21 @@
 part of "../scientisst_db.dart";
 
 class DocumentReference {
-  String objectId;
-  CollectionReference parent;
-  String _filePath;
-  String _collectionsPath;
-  _MetadataReference _metadata;
+  late String objectId;
+  final CollectionReference parent;
+  late String _filePath;
+  late String _collectionsPath;
+  late _MetadataReference _metadata;
 
-  DocumentReference._({@required this.parent, @required String path}) {
-    assert(path != null &&
-        path.isNotEmpty &&
-        !path.contains(".") &&
-        !path.contains("/"));
+  DocumentReference._({required this.parent, required String path}) {
+    assert(path.isNotEmpty && !path.contains(".") && !path.contains("/"));
 
     objectId = path;
 
     _filePath = ScientISSTdb._joinPaths(parent._documentsPath, path);
     _collectionsPath = ScientISSTdb._joinPaths(parent._collectionsPath, path);
 
-    final String metadataPath =
-        ScientISSTdb._joinPaths(parent._metadataPath, path);
+    final metadataPath = ScientISSTdb._joinPaths(parent._metadataPath, path);
     _metadata = _MetadataReference(parent: this, path: metadataPath);
   }
 
@@ -41,17 +37,15 @@ class DocumentReference {
             ),
       );
     } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 2)
+      if (e.osError!.errorCode != 2)
         throw e; // if error is not "No such file or directory"
       else
-        print("No such document or collection"); //TODO improve error throwing
-      return null;
+        return [];
     }
   }
 
-  Future<List<CollectionReference>> getCollections() async {
-    final List<String> collections = await listCollections();
-    if (collections == null) return null;
+  Future<List<CollectionReference>?> getCollections() async {
+    final collections = await listCollections();
     return List<CollectionReference>.from(
       collections.map(
         (String path) async => CollectionReference._(parent: this, path: path),
@@ -59,13 +53,13 @@ class DocumentReference {
     );
   }
 
-  Future<void> set(Map<String, dynamic> data, {bool merge: false}) async {
+  Future<void> set(Map<String, dynamic>? data, {bool merge: false}) async {
     if (!(await _file).existsSync()) await _init();
-    if (merge) {
-      await update(data);
+    if (data == null || data.isEmpty) {
+      await delete();
     } else {
-      if (data == null || data.isEmpty) {
-        await delete();
+      if (merge) {
+        await update(data);
       } else {
         await _write(data);
       }
@@ -101,7 +95,7 @@ class DocumentReference {
   }
 
   Future<void> _init() async {
-    if (parent != null && parent.parent != null) await parent.parent._init();
+    if (parent.parent != null) await parent.parent!._init();
     await _metadata.init();
     (await _collections).createSync(recursive: true);
     (await _file).createSync(recursive: true);
@@ -111,7 +105,7 @@ class DocumentReference {
     (await _file).deleteSync();
     (await _collections).deleteSync(recursive: true);
     await _metadata.delete();
-    await parent?._deleteEmpty();
+    await parent._deleteEmpty();
   }
 
   String get id => objectId;
@@ -154,7 +148,7 @@ class DocumentReference {
     }
   }
 
-  static dynamic _convertToType(dynamic value, String type) {
+  static dynamic _convertToType(dynamic value, String? type) {
     if (type == "num" ||
         type == "double" ||
         type == "int" ||

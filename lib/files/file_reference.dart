@@ -1,11 +1,11 @@
 part of '../scientisst_db.dart';
 
 class FileReference {
-  String _path;
-  DirectoryReference parent;
+  late String _path;
+  late DirectoryReference parent;
 
-  FileReference._({@required String path, this.parent}) {
-    assert(path != null && path.isNotEmpty);
+  FileReference._({required String path, required this.parent}) {
+    assert(path.isNotEmpty);
     _path = ScientISSTdb._joinPaths(parent._path, path);
   }
 
@@ -36,6 +36,6 @@ class FileReference {
   Future<void> delete() async {
     final File _file = await ScientISSTdb._getFile(_path);
     _file.deleteSync();
-    await parent?._deleteEmpty();
+    await parent._deleteEmpty();
   }
 }

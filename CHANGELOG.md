@@ -1,3 +1,7 @@
+## [0.1.0]
+
+- Upgraded to Null Safety
+
 ## [0.0.8]
 
 - Removed import/export methods

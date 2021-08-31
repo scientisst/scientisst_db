@@ -4,20 +4,20 @@ const MAXIMUM_RANDOM_START = 16777216; // 3 bytes - 24 bits
 const MAXIMUM_RANDOM_END = 65536; // 2 bytes - 16 bits
 
 class ObjectId {
-  String _id;
-  int _timestamp;
-  String _randomValue;
-  int _counter;
+  late String _id;
+  late int _timestamp;
+  late String _randomValue;
+  late int _counter;
 
-  ObjectId([String hexCode]) {
+  ObjectId([String? hexCode]) {
     if (hexCode == null) {
       _timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000);
-      final int randomValueStart = Random().nextInt(MAXIMUM_RANDOM_START) - 1;
-      final int randomValueEnd = Random().nextInt(MAXIMUM_RANDOM_END) - 1;
-      String _randomValue = randomValueStart.toRadixString(16).padLeft(6, '0') +
+      final randomValueStart = Random().nextInt(MAXIMUM_RANDOM_START) - 1;
+      final randomValueEnd = Random().nextInt(MAXIMUM_RANDOM_END) - 1;
+      final _randomValue = randomValueStart.toRadixString(16).padLeft(6, '0') +
           randomValueEnd.toRadixString(16).padLeft(4, '0');
 
-      _counter = ScientISSTdb.instance._counter;
+      _counter = ScientISSTdb.instance!._counter;
       _id = _timestamp.toRadixString(16).padLeft(8, '0') +
           _randomValue +
           _counter.toRadixString(16).padLeft(6, '0');
@@ -28,7 +28,7 @@ class ObjectId {
         _counter = int.parse(hexCode.substring(18), radix: 16);
         _id = hexCode;
       } else {
-        throw "Invalid ObjectId hex code";
+        throw Exception("Invalid ObjectId hex code");
       }
     }
   }

@@ -1,19 +1,16 @@
 part of "../scientisst_db.dart";
 
 class CollectionReference {
-  String _directoryPath;
-  String _documentsPath;
-  String _metadataPath;
-  String _collectionsPath;
-  final DocumentReference parent;
+  late String _directoryPath;
+  late String _documentsPath;
+  late String _metadataPath;
+  late String _collectionsPath;
+  final DocumentReference? parent;
 
-  CollectionReference._({@required this.parent, @required path}) {
-    assert(path != null &&
-        path.isNotEmpty &&
-        !path.contains(".") &&
-        !path.contains("/"));
+  CollectionReference._({required this.parent, required String path}) {
+    assert(path.isNotEmpty && !path.contains(".") && !path.contains("/"));
     if (parent != null) {
-      _directoryPath = ScientISSTdb._joinPaths(parent._collectionsPath, path);
+      _directoryPath = ScientISSTdb._joinPaths(parent!._collectionsPath, path);
     } else {
       _directoryPath = ScientISSTdb._joinPaths(DB_PATH, path);
     }
@@ -27,10 +24,6 @@ class CollectionReference {
       await ScientISSTdb._getDirectory(_directoryPath);
   Future<Directory> get _documents async =>
       await ScientISSTdb._getDirectory(_documentsPath);
-  Future<Directory> get _metadatas async =>
-      await ScientISSTdb._getDirectory(_metadataPath);
-  Future<Directory> get _collections async =>
-      await ScientISSTdb._getDirectory(_collectionsPath);
 
   DocumentReference document(String path) {
     assert(!path.contains("/") && !path.contains("."));
@@ -46,7 +39,7 @@ class CollectionReference {
             ),
       );
     } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 2)
+      if (e.osError!.errorCode != 2)
         throw e; // if error is not "No such file or directory"
       return [];
     }
@@ -63,7 +56,7 @@ class CollectionReference {
   Stream<List<DocumentSnapshot>> watchDocuments() async* {
     List<DocumentSnapshot> docs = await getDocuments();
     yield docs;
-    await for (WatchEvent event
+    await for (WatchEvent _
         in DirectoryWatcher(await _absoluteDocumentsPath).events) {
       docs = await getDocuments();
       yield (docs);
@@ -87,13 +80,10 @@ class CollectionReference {
           .delete(); // if this deletes, it is safe to delete directory recursively
       (await _directory).deleteSync(recursive: true);
     } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 39)
+      if (e.osError!.errorCode != 39)
         throw e; // if error is not "Directory not empty"
     }
   }
-
-  Future<String> get _absolutePath async =>
-      ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _directoryPath);
 
   Future<String> get _absoluteDocumentsPath async =>
       ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _documentsPath);
@@ -104,7 +94,7 @@ class CollectionReference {
       dynamic isLessThanOrEqualTo,
       dynamic isGreaterThan,
       dynamic isGreaterThanOrEqualTo,
-      bool isNull}) {
+      bool? isNull}) {
     final List<dynamic> values = [
       isEqualTo,
       isLessThan,

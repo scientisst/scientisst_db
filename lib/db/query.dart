@@ -30,18 +30,18 @@ class Query {
   Query._(this.reference, this._query);
 
   static Where _getWhere(
-      {@required String field, @required List<dynamic> values}) {
+      {required String field, required List<dynamic> values}) {
     assert(values.where((dynamic operator) => operator != null).length == 1);
-    final int index = values.indexWhere(
+    final index = values.indexWhere(
       (dynamic operator) => operator != null,
     );
-    Operator operator = OPERATORS[index];
-    dynamic value = values[index];
+    final operator = OPERATORS[index];
+    final value = values[index];
 
     return Where(field: field, operator: operator, value: value);
   }
 
-  static OrderBy _getOrderBy({@required String field, bool descending}) =>
+  static OrderBy _getOrderBy({required String field, bool? descending}) =>
       OrderBy(field: field, descending: descending);
 
   Future<List<String>> listDocuments() async {
@@ -53,14 +53,14 @@ class Query {
             ),
       );
     } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 2)
+      if (e.osError!.errorCode != 2)
         throw e; // if error is not "No such file or directory"
       return [];
     }
   }
 
   Future<List<DocumentSnapshot>> getDocuments() async {
-    final List<String> documents = await listDocuments();
+    final documents = await listDocuments();
     List<DocumentSnapshot> snaps = await Future.wait(
       documents.map((String documentID) async =>
           await DocumentReference._(parent: reference, path: documentID).get()),
@@ -84,7 +84,7 @@ class Query {
             (DocumentSnapshot doc1, DocumentSnapshot doc2) => _compare(
               doc1.data[orderByCondition.field],
               doc2.data[orderByCondition.field],
-              descending: orderByCondition.descending,
+              descending: orderByCondition.descending!,
             ),
           );
         }
@@ -96,7 +96,7 @@ class Query {
   Stream<List<DocumentSnapshot>> watchDocuments() async* {
     List<DocumentSnapshot> docs = await getDocuments();
     yield docs;
-    await for (WatchEvent event
+    await for (final _
         in DirectoryWatcher(await reference._absoluteDocumentsPath).events) {
       docs = await getDocuments();
       yield (docs);
@@ -104,7 +104,7 @@ class Query {
   }
 
   int _compare(dynamic value1, dynamic value2, {bool descending: false}) {
-    int _descending = (descending ? 1 : -1);
+    final _descending = (descending ? 1 : -1);
     if (value1 is num && value2 is num) {
       if (value1 == value2) return 0;
       if (value1 > value2)
@@ -127,16 +127,16 @@ class Query {
       return _checkOperatorNum(field, operator, value);
     } else if (field is String && value is String) {
       return _checkOperatorString(field, operator, value);
+    } else if (operator == Operator.isNull) {
+      return field == null;
     } else {
       return false;
     }
   }
 
   bool _checkOperatorString(String field, Operator operator, String value) {
-    final int comparison = field.compareTo(value);
+    final comparison = field.compareTo(value);
     switch (operator) {
-      case Operator.isNull:
-        return field == null;
       case Operator.isGreaterThan:
         return comparison > 0;
       case Operator.isGreaterThanOrEqualTo:
@@ -154,8 +154,6 @@ class Query {
 
   bool _checkOperatorNum(num field, Operator operator, num value) {
     switch (operator) {
-      case Operator.isNull:
-        return field == null;
       case Operator.isGreaterThan:
         return field > value;
       case Operator.isGreaterThanOrEqualTo:
@@ -177,7 +175,7 @@ class Query {
       dynamic isLessThanOrEqualTo,
       dynamic isGreaterThan,
       dynamic isGreaterThanOrEqualTo,
-      bool isNull}) {
+      bool? isNull}) {
     final List<dynamic> values = [
       isEqualTo,
       isLessThan,
@@ -209,12 +207,12 @@ class Condition {}
 class OrderBy extends Condition {
   final String field;
   final bool descending;
-  OrderBy({@required this.field, this.descending = false});
+  OrderBy({required this.field, this.descending = false});
 }
 
 class Where extends Condition {
   final String field;
   final Operator operator;
   final dynamic value;
-  Where({@required this.field, @required this.operator, @required this.value});
+  Where({required this.field, required this.operator, required this.value});
 }

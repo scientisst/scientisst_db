@@ -1,13 +1,13 @@
 part of '../scientisst_db.dart';
 
 class DirectoryReference {
-  String _path;
-  DirectoryReference parent;
+  late String _path;
+  late DirectoryReference? parent;
 
-  DirectoryReference._({@required String path, this.parent}) {
-    assert(path != null && path.isNotEmpty && !path.contains("."));
+  DirectoryReference._({required String path, this.parent}) {
+    assert(path.isNotEmpty && !path.contains("."));
     if (parent != null) {
-      _path = ScientISSTdb._joinPaths(parent._path, path);
+      _path = ScientISSTdb._joinPaths(parent!._path, path);
     } else {
       _path = path;
     }
@@ -40,7 +40,7 @@ class DirectoryReference {
             ),
       );
     } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 2)
+      if (e.osError!.errorCode != 2)
         throw e; // if error is not "No such file or directory"
       return [];
     }
@@ -52,13 +52,15 @@ class DirectoryReference {
     await file
         .copy(ScientISSTdb._joinPaths(await ScientISSTdb._dbDirPath, _path));
     await file.delete();
+    final filename = file.path.split("/").last;
+    return FileReference._(path: filename, parent: this);
   }
 
   Future<FileReference> putBytes(Uint8List bytes, String filename) async {
     assert(!filename.contains("/"));
     final Directory dir = await _directory;
     dir.createSync(recursive: true);
-    final File file =
+    final file =
         await ScientISSTdb._getFile(ScientISSTdb._joinPaths(_path, filename));
     file.writeAsBytesSync(bytes);
     return FileReference._(path: filename, parent: this);
@@ -81,7 +83,7 @@ class DirectoryReference {
     try {
       (await _directory).deleteSync();
     } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 39)
+      if (e.osError!.errorCode != 39)
         throw e; // if error is not "Directory not empty"
     }
   }

@@ -1,10 +1,10 @@
 part of "../scientisst_db.dart";
 
 class _MetadataReference {
-  DocumentReference parent;
-  String _path;
+  final DocumentReference parent;
+  late String _path;
 
-  _MetadataReference({@required this.parent, @required String path}) {
+  _MetadataReference({required this.parent, required String path}) {
     _path = path;
   }
 
@@ -21,7 +21,8 @@ class _MetadataReference {
   Future<File> get _file async => await ScientISSTdb._getFile(_path);
 
   Future<void> _updateData(Map<String, dynamic> data) async {
-    final Map<String, dynamic> _data = await _read();
+    final Map<String, dynamic> _data =
+        await (_read() as FutureOr<Map<String, dynamic>>);
     _data.addAll(data);
     await _write(_data);
   }
@@ -29,7 +30,7 @@ class _MetadataReference {
   Future<Map<String, dynamic>> _read() async {
     try {
       return jsonDecode((await _file).readAsStringSync());
-    } on FormatException catch (e) {
+    } on FormatException catch (_) {
       return {};
     } on FileSystemException catch (e) {
       throw e;

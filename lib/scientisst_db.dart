@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:watcher/watcher.dart';
 
@@ -30,8 +29,8 @@ class ScientISSTdb {
       : getApplicationDocumentsDirectory();
   //: getExternalStorageDirectory();
 
-  static ScientISSTdb _cachedInstance;
-  static String _cachedPath;
+  static ScientISSTdb? _cachedInstance;
+  static String? _cachedPath;
   int _counterVal = Random().nextInt(MAXIMUM_COUNTER) - 1;
 
   int get _counter {
@@ -40,7 +39,7 @@ class ScientISSTdb {
     return counter;
   }
 
-  static ScientISSTdb get instance {
+  static ScientISSTdb? get instance {
     if (_cachedInstance != null) {
       return _cachedInstance;
     }
@@ -50,7 +49,7 @@ class ScientISSTdb {
     return _cachedInstance;
   }
 
-  static Future<String> get _dbDirPath async {
+  static Future<String?> get _dbDirPath async {
     if (_cachedPath != null) {
       return _cachedPath;
     }
@@ -61,15 +60,15 @@ class ScientISSTdb {
 
   DirectoryReference get files => DirectoryReference._(path: FILES_PATH);
 
-  static Future<Directory> _getDirectory([String path]) async =>
+  static Future<Directory> _getDirectory([String? path]) async =>
       Directory(_joinPaths(await _dbDirPath, path));
 
-  static Future<File> _getFile(String path) async =>
+  static Future<File> _getFile(String? path) async =>
       File(_joinPaths(await _dbDirPath, path));
 
-  static String _joinPaths(dynamic paths, [String path2]) {
+  static String _joinPaths(dynamic paths, [String? path2]) {
     assert(paths != null);
-    if (paths is String && path2 is String && path2 != null) {
+    if (paths is String && path2 is String) {
       paths = _trimPath(paths);
       path2 = _trimPath(path2);
       return "$paths/$path2";
@@ -112,7 +111,7 @@ class ScientISSTdb {
             ),
       );
     } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 2)
+      if (e.osError!.errorCode != 2)
         throw e; // if error is not "No such file or directory"
       return [];
     }
@@ -131,36 +130,9 @@ class ScientISSTdb {
     try {
       (await _getDirectory(DB_PATH)).deleteSync(recursive: true);
     } on FileSystemException catch (e) {
-      if (e.osError.errorCode != 2)
+      if (e.osError!.errorCode != 2)
         throw e; // if error is not "No such file or directory"
       return;
     }
-  }
-
-  static void _copyDirectory(Directory directory, String path) {
-    Directory dest = Directory(path);
-    if (!dest.existsSync()) dest.createSync(recursive: true);
-
-    directory.listSync(recursive: true).forEach(
-      (FileSystemEntity file) {
-        final String relativePath = file.path.substring(directory.path.length);
-        final String newPath = _joinPaths(path, relativePath);
-        if (file is File) {
-          _checkCreateDir(newPath);
-          file.copySync(newPath);
-        } else if (file is Directory) {
-          final Directory newDir = Directory(newPath);
-          if (!newDir.existsSync()) newDir.create(recursive: true);
-        }
-      },
-    );
-  }
-
-  static void _checkCreateDir(String filepath) {
-    List<String> parts = filepath.split("/");
-    if (parts.length > 1) {
-      parts = parts.sublist(0, parts.length - 1);
-    }
-    Directory(parts.join("/")).createSync(recursive: true);
   }
 }
