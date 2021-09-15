@@ -50,7 +50,7 @@ class _ExampleState extends State<Example> {
     );
     await ScientISSTdb.instance!
         .collection("movies")
-        .document(inception.id!)
+        .document(inception.id)
         .collection("actors")
         .add(
       {
@@ -60,7 +60,7 @@ class _ExampleState extends State<Example> {
     );
     await ScientISSTdb.instance!
         .collection("movies")
-        .document(inception.id!)
+        .document(inception.id)
         .collection("actors")
         .add(
       {
@@ -86,17 +86,17 @@ class _ExampleState extends State<Example> {
               .getDocuments(),
           builder: (BuildContext context,
               AsyncSnapshot<List<DocumentSnapshot>> snap) {
-            if (snap == null || snap.hasError || snap.data == null)
+            if (snap.hasError || snap.data == null)
               return Container();
             else
               return ListView.builder(
                 itemCount: snap.data!.length,
                 itemBuilder: (BuildContext context, int index) => ListTile(
                   title: Text(
-                    snap.data![index].data!["title"],
+                    snap.data![index].data["title"],
                   ),
                   subtitle: Text(
-                    snap.data![index].data!["year"].toString(),
+                    snap.data![index].data["year"].toString(),
                   ),
                 ),
               );

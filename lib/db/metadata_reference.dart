@@ -22,7 +22,7 @@ class _MetadataReference {
 
   Future<void> _updateData(Map<String, dynamic> data) async {
     final Map<String, dynamic> _data =
-        await (_read() as FutureOr<Map<String, dynamic>>);
+        await (_read());
     _data.addAll(data);
     await _write(_data);
   }

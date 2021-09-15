@@ -153,10 +153,11 @@ class DocumentReference {
         type == "double" ||
         type == "int" ||
         type == "bool" ||
-        type == "String" ||
-        type == "List")
+        type == "String")
       return value;
-    else if (type == "DateTime")
+    else if (type == "List") {
+      return value;
+    } else if (type == "DateTime")
       return DateTime.parse(value);
     else if (type == "List<DateTime>")
       return List<DateTime>.from(

@@ -2,7 +2,7 @@ part of '../scientisst_db.dart';
 
 class DirectoryReference {
   late String _path;
-  late DirectoryReference? parent;
+  DirectoryReference? parent;
 
   DirectoryReference._({required String path, this.parent}) {
     assert(path.isNotEmpty && !path.contains("."));
@@ -70,7 +70,7 @@ class DirectoryReference {
     final List<String> collections = await listFiles();
     return List<FileReference>.from(
       collections.map(
-        (String path) => FileReference._(path: path),
+        (String path) => FileReference._(path: path, parent: this),
       ),
     );
   }
