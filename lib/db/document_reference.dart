@@ -67,25 +67,10 @@ class DocumentReference {
   }
 
   Future<void> _write(Map<String, dynamic> data) async {
-    await _metadata.setFieldTypes(data);
+    await _metadata.updateData();
     await (await _file).writeAsString(
-      jsonEncode(data, toEncodable: _myEncode),
+      jsonEncode(data, toEncodable: ScientISSTdb._myEncode),
     );
-  }
-
-  dynamic _myEncode(dynamic item) {
-    if (item is DateTime) {
-      return item.toIso8601String();
-    } else if (item is List<DateTime>) {
-      return List<dynamic>.from(
-        item.map(
-          (DateTime i) => i.toIso8601String(),
-        ),
-      );
-    } else if (item is List) {
-      return List<dynamic>.from(item);
-    }
-    return item;
   }
 
   Future<void> update(Map<String, dynamic> data) async {
@@ -112,21 +97,8 @@ class DocumentReference {
 
   Future<Map<String, dynamic>> _read() async {
     try {
-      final Map<String, String> fieldsType = (await _metadata.get()).fieldsType;
-      return jsonDecode(
-        (await _file).readAsStringSync(),
-        reviver: fieldsType.isEmpty
-            ? null
-            : (key, value) {
-                if (key is String) {
-                  return _convertToType(
-                    value,
-                    fieldsType[key],
-                  );
-                }
-                return value;
-              },
-      );
+      final json = (await _file).readAsStringSync();
+      return jsonDecode(json);
     } on FormatException catch (_) {
       return {};
     } on FileSystemException catch (e) {
@@ -146,29 +118,6 @@ class DocumentReference {
       doc = await get();
       yield doc;
     }
-  }
-
-  static dynamic _convertToType(dynamic value, String? type) {
-    if (type == "num" ||
-        type == "double" ||
-        type == "int" ||
-        type == "bool" ||
-        type == "String" ||
-        type == "List")
-      return value;
-    else if (type == "DateTime")
-      return DateTime.parse(value);
-    else if (type == "List<DateTime>")
-      return List<DateTime>.from(
-        (value as List<dynamic>).map(
-          (dynamic item) => DateTime.parse(item),
-        ),
-      );
-    else if (type == "Null")
-      return null;
-    else
-      throw Exception(
-          "scientisst_db cannot cast this type of object - Value: $value, Type: ${value.runtimeType.toString()} - into $type");
   }
 
   Future<String> get _absolutePath async =>

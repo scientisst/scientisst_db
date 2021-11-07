@@ -139,4 +139,11 @@ class ScientISSTdb {
       return false;
     }
   }
+
+  static dynamic _myEncode(dynamic item) {
+    if (item is DateTime) {
+      return item.toIso8601String();
+    }
+    return item;
+  }
 }

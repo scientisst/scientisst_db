@@ -1,3 +1,9 @@
+## [0.1.1]
+
+- Fixed null safety issues
+- Stopped using metadata field types
+- DateTime stored as Iso8601String
+
 ## [0.1.0]
 
 - Upgraded to Null Safety

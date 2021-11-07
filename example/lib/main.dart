@@ -26,7 +26,7 @@ class _ExampleState extends State<Example> {
 
   void generateDB() async {
     await ScientISSTdb.clearDatabase(confirm: true);
-    await ScientISSTdb.instance!.collection("movies").add(
+    await ScientISSTdb.instance.collection("movies").add(
       {
         "title": "Eternal Sunshine of the Spotless Mind",
         "year": 2004,
@@ -36,9 +36,8 @@ class _ExampleState extends State<Example> {
         ],
       },
     );
-
     DocumentReference inception =
-        await ScientISSTdb.instance!.collection("movies").add(
+        await ScientISSTdb.instance.collection("movies").add(
       {
         "title": "Inception",
         "year": 2010,
@@ -49,7 +48,7 @@ class _ExampleState extends State<Example> {
         ],
       },
     );
-    await ScientISSTdb.instance!
+    await ScientISSTdb.instance
         .collection("movies")
         .document(inception.id)
         .collection("actors")
@@ -59,7 +58,7 @@ class _ExampleState extends State<Example> {
         "birthdate": DateTime(1974, 10, 11),
       },
     );
-    await ScientISSTdb.instance!
+    await ScientISSTdb.instance
         .collection("movies")
         .document(inception.id)
         .collection("actors")
@@ -81,7 +80,7 @@ class _ExampleState extends State<Example> {
       ),
       body: SafeArea(
         child: FutureBuilder(
-          future: ScientISSTdb.instance!
+          future: ScientISSTdb.instance
               .collection("movies")
               .orderBy("year", descending: false)
               .getDocuments(),
