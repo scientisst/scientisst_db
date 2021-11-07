@@ -1,3 +1,7 @@
+## [0.1.2]
+
+- Added "limit" to Query
+
 ## [0.1.1]
 
 - Fixed null safety issues

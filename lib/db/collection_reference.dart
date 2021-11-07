@@ -106,7 +106,10 @@ class CollectionReference {
     return Query._(
       this,
       [
-        Query._getWhere(field: field, values: values),
+        Query._getWhere(
+          field: field,
+          values: values,
+        ),
       ],
     );
   }
@@ -118,6 +121,13 @@ class CollectionReference {
             field: field,
             descending: descending,
           ),
+        ],
+      );
+
+  Query limit(int limit) => Query._(
+        this,
+        [
+          Query._getLimit(limit: limit),
         ],
       );
 }

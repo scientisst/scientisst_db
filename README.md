@@ -13,7 +13,7 @@ Made by the [ScientISST](https://scientisst.com) team.
 dependencies:
   flutter:
     sdk: flutter
-  scientisst_db: ^0.1.1
+  scientisst_db: ^0.1.2
 ```
 
 ## Architecture
@@ -94,7 +94,6 @@ await ScientISSTdb.instance
 
 ## Future
 
-- Add a `Query` to limit the `collection` to the first N elements;
 - Improve the `Exceptions` thrown.
 
 If you have any suggestion or problem, let us know and we'll try to improve or fix them.

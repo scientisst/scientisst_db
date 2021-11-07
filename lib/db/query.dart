@@ -45,6 +45,8 @@ class Query {
           {required String field, bool descending = false}) =>
       OrderBy(field: field, descending: descending);
 
+  static Limit _getLimit({required int limit}) => Limit(limit: limit);
+
   Future<List<String>> listDocuments() async {
     final Directory documents = await reference._documents;
     try {
@@ -88,6 +90,8 @@ class Query {
               descending: orderByCondition.descending,
             ),
           );
+        } else if (condition is Limit) {
+          snaps = snaps.sublist(0, condition.limit);
         }
       }
     }
@@ -188,8 +192,8 @@ class Query {
     return Query._(
       reference,
       _query
-        ..addAll(
-          [_getWhere(field: field, values: values)],
+        ..add(
+          _getWhere(field: field, values: values),
         ),
     );
   }
@@ -197,8 +201,16 @@ class Query {
   Query orderBy(String field, {bool descending = false}) => Query._(
         reference,
         _query
-          ..addAll(
-            [_getOrderBy(field: field, descending: descending)],
+          ..add(
+            _getOrderBy(field: field, descending: descending),
+          ),
+      );
+
+  Query limit(int limit) => Query._(
+        reference,
+        _query
+          ..add(
+            _getLimit(limit: limit),
           ),
       );
 }
@@ -216,4 +228,9 @@ class Where extends Condition {
   final Operator operator;
   final dynamic value;
   Where({required this.field, required this.operator, required this.value});
+}
+
+class Limit extends Condition {
+  final int limit;
+  Limit({required this.limit}) : assert(limit > 0);
 }
