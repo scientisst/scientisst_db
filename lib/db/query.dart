@@ -41,7 +41,8 @@ class Query {
     return Where(field: field, operator: operator, value: value);
   }
 
-  static OrderBy _getOrderBy({required String field, bool? descending}) =>
+  static OrderBy _getOrderBy(
+          {required String field, bool descending = false}) =>
       OrderBy(field: field, descending: descending);
 
   Future<List<String>> listDocuments() async {
@@ -84,7 +85,7 @@ class Query {
             (DocumentSnapshot doc1, DocumentSnapshot doc2) => _compare(
               doc1.data[orderByCondition.field],
               doc2.data[orderByCondition.field],
-              descending: orderByCondition.descending!,
+              descending: orderByCondition.descending,
             ),
           );
         }

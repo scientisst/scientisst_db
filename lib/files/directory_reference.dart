@@ -70,7 +70,7 @@ class DirectoryReference {
     final List<String> collections = await listFiles();
     return List<FileReference>.from(
       collections.map(
-        (String path) => FileReference._(path: path),
+        (String path) => FileReference._(path: path, parent: this),
       ),
     );
   }

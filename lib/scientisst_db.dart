@@ -126,13 +126,17 @@ class ScientISSTdb {
     );
   }
 
-  static Future<void> clearDatabase() async {
-    try {
-      (await _getDirectory(DB_PATH)).deleteSync(recursive: true);
-    } on FileSystemException catch (e) {
-      if (e.osError!.errorCode != 2)
-        throw e; // if error is not "No such file or directory"
-      return;
+  static Future<bool> clearDatabase({bool confirm = false}) async {
+    if (confirm) {
+      try {
+        (await _getDirectory(DB_PATH)).deleteSync(recursive: true);
+      } on FileSystemException catch (e) {
+        if (e.osError!.errorCode != 2)
+          throw e; // if error is not "No such file or directory"
+      }
+      return true;
+    } else {
+      return false;
     }
   }
 }
