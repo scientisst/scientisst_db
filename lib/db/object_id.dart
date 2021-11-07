@@ -17,7 +17,7 @@ class ObjectId {
       final _randomValue = randomValueStart.toRadixString(16).padLeft(6, '0') +
           randomValueEnd.toRadixString(16).padLeft(4, '0');
 
-      _counter = ScientISSTdb.instance!._counter;
+      _counter = ScientISSTdb.instance._counter;
       _id = _timestamp.toRadixString(16).padLeft(8, '0') +
           _randomValue +
           _counter.toRadixString(16).padLeft(6, '0');

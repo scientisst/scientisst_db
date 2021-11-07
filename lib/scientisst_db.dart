@@ -39,14 +39,14 @@ class ScientISSTdb {
     return counter;
   }
 
-  static ScientISSTdb? get instance {
+  static ScientISSTdb get instance {
     if (_cachedInstance != null) {
-      return _cachedInstance;
+      return _cachedInstance!;
     }
 
     _cachedInstance = ScientISSTdb();
 
-    return _cachedInstance;
+    return _cachedInstance!;
   }
 
   static Future<String?> get _dbDirPath async {
