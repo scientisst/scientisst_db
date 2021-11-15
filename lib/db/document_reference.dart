@@ -20,6 +20,7 @@ class DocumentReference {
   }
 
   Future<File> get _file async => await ScientISSTdb._getFile(_filePath);
+
   Future<Directory> get _collections async =>
       await ScientISSTdb._getDirectory(_collectionsPath);
 
@@ -74,7 +75,7 @@ class DocumentReference {
   }
 
   Future<void> update(Map<String, dynamic> data) async {
-    Map<String, dynamic> _data = await _read();
+    Map<String, dynamic> _data = await _read() ?? {};
     _data.addAll(data);
     await _write(_data);
   }
@@ -95,10 +96,15 @@ class DocumentReference {
 
   String get id => objectId;
 
-  Future<Map<String, dynamic>> _read() async {
+  Future<Map<String, dynamic>?> _read() async {
     try {
-      final json = (await _file).readAsStringSync();
-      return jsonDecode(json);
+      final file = await _file;
+      if (file.existsSync()) {
+        final json = (await _file).readAsStringSync();
+        return jsonDecode(json);
+      } else {
+        return null;
+      }
     } on FormatException catch (_) {
       return {};
     } on FileSystemException catch (e) {

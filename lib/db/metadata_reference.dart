@@ -21,14 +21,19 @@ class _MetadataReference {
   Future<File> get _file async => await ScientISSTdb._getFile(_path);
 
   Future<void> _updateData(Map<String, dynamic> data) async {
-    final Map<String, dynamic> _data = await _read();
+    final Map<String, dynamic> _data = await _read() ?? {};
     _data.addAll(data);
     await _write(_data);
   }
 
-  Future<Map<String, dynamic>> _read() async {
+  Future<Map<String, dynamic>?> _read() async {
     try {
-      return jsonDecode((await _file).readAsStringSync());
+      final file = await _file;
+      if (file.existsSync()) {
+        return jsonDecode((await _file).readAsStringSync());
+      } else {
+        return null;
+      }
     } on FormatException catch (_) {
       return {};
     } on FileSystemException catch (e) {

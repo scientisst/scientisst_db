@@ -76,7 +76,7 @@ class Query {
           snaps = List<DocumentSnapshot>.from(
             snaps.where(
               (DocumentSnapshot doc) {
-                return _checkOperator(doc.data[whereCondition.field],
+                return _checkOperator(doc.data![whereCondition.field],
                     whereCondition.operator, whereCondition.value);
               },
             ),
@@ -85,8 +85,8 @@ class Query {
           final OrderBy orderByCondition = condition;
           snaps.sort(
             (DocumentSnapshot doc1, DocumentSnapshot doc2) => _compare(
-              doc1.data[orderByCondition.field],
-              doc2.data[orderByCondition.field],
+              doc1.data![orderByCondition.field],
+              doc2.data![orderByCondition.field],
               descending: orderByCondition.descending,
             ),
           );
